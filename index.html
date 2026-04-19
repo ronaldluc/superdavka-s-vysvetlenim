@@ -78,7 +78,11 @@
 
   /* Calculator */
   .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-  @media(max-width:640px){.calc-grid{grid-template-columns:1fr}}
+  @media(max-width:640px){
+    .calc-grid{grid-template-columns:1fr}
+    .calc-grid > div:first-child{order:2}
+    .calc-grid > div:last-child{order:1}
+  }
   .input-group{margin-bottom:1rem}
   .input-group label{display:flex;justify-content:space-between;align-items:center;
     font-size:.85rem;font-weight:600;margin-bottom:.25rem;gap:.4rem;flex-wrap:wrap}
