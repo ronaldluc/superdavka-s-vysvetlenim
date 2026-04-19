@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Superdávka 2026 — Kalkulačka s vysvětlením</title>
+<style>
+  :root {
+    --c-bg: #f8f9fa; --c-card: #fff; --c-border: #dee2e6;
+    --c-text: #212529; --c-muted: #6c757d; --c-accent: #0d6efd;
+    --c-housing: #3b82f6; --c-subsist: #ef4444; --c-work: #22c55e;
+    --c-child: #a855f7;
+    --c-total: #1e293b; --c-band: rgba(59,130,246,.06);
+    --radius: 10px; --shadow: 0 1px 3px rgba(0,0,0,.08);
+  }
+  @media(prefers-color-scheme:dark){:root{
+    --c-bg:#0f172a;--c-card:#1e293b;--c-border:#334155;
+    --c-text:#e2e8f0;--c-muted:#94a3b8;--c-accent:#60a5fa;
+    --c-housing:#60a5fa;--c-subsist:#f87171;--c-work:#4ade80;
+    --c-child:#c084fc;
+    --c-total:#f1f5f9;--c-band:rgba(96,165,250,.08);
+  }}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:var(--c-bg);color:var(--c-text);line-height:1.6;
+    padding:0 1rem 4rem}
+  .wrap{max-width:900px;margin:0 auto}
+  header{text-align:center;padding:2.5rem 0 1.5rem}
+  header h1{font-size:2rem;font-weight:800;letter-spacing:-.02em}
+  header .sub{color:var(--c-muted);font-size:.95rem;margin-top:.3rem}
+  header .law{display:inline-block;margin-top:.6rem;font-size:.8rem;
+    padding:.25rem .7rem;border-radius:20px;
+    background:var(--c-band);color:var(--c-accent);font-weight:600}
+
+  h2{font-size:1.25rem;font-weight:700;margin:2rem 0 .8rem;
+    padding-bottom:.4rem;border-bottom:2px solid var(--c-border)}
+  h3{font-size:1rem;font-weight:700;margin:1.2rem 0 .4rem}
+
+  .card{background:var(--c-card);border:1px solid var(--c-border);
+    border-radius:var(--radius);padding:1.2rem 1.4rem;margin:.8rem 0;
+    box-shadow:var(--shadow)}
+
+  /* Master formula */
+  .master{text-align:center;font-size:1.1rem;font-weight:600;
+    padding:1.4rem;background:var(--c-band)}
+  .master .eq{font-family:"Courier New",Courier,monospace;font-size:1.05rem;word-break:break-word}
+
+  /* Component formulas */
+  .comp{border-left:4px solid var(--c-border);padding-left:1rem}
+  .comp.housing{border-color:var(--c-housing)}
+  .comp.subsist{border-color:var(--c-subsist)}
+  .comp.child{border-color:var(--c-child)}
+  .comp.work{border-color:var(--c-work)}
+  .comp .tag{display:inline-block;font-size:.7rem;font-weight:700;
+    padding:.1rem .45rem;border-radius:4px;color:#fff;margin-bottom:.3rem}
+  .comp.housing .tag{background:var(--c-housing)}
+  .comp.subsist .tag{background:var(--c-subsist)}
+  .comp.child .tag{background:var(--c-child)}
+  .comp.work .tag{background:var(--c-work)}
+  .f{font-family:"Courier New",Courier,monospace;font-size:.88rem;
+    background:var(--c-band);padding:.55rem .8rem;border-radius:6px;
+    margin:.4rem 0;line-height:1.7;overflow-x:auto;white-space:pre-wrap}
+  .note{font-size:.82rem;color:var(--c-muted);margin-top:.3rem}
+
+  /* Tables */
+  table{width:100%;border-collapse:collapse;font-size:.85rem;margin:.5rem 0}
+  th,td{padding:.4rem .6rem;border:1px solid var(--c-border);text-align:right}
+  th{background:var(--c-band);font-weight:600;text-align:left}
+  td:first-child{text-align:left;font-weight:500}
+
+  /* Calculator */
+  .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  @media(max-width:640px){.calc-grid{grid-template-columns:1fr}}
+  .input-group{margin-bottom:1rem}
+  .input-group label{display:flex;justify-content:space-between;align-items:center;
+    font-size:.85rem;font-weight:600;margin-bottom:.25rem;gap:.4rem;flex-wrap:wrap}
+  .input-group label .val{color:var(--c-accent);font-variant-numeric:tabular-nums;margin-left:auto}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;
+    border-radius:3px;background:var(--c-border);outline:none;cursor:pointer}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;
+    border-radius:50%;background:var(--c-accent);cursor:pointer;
+    border:2px solid var(--c-card);box-shadow:0 1px 4px rgba(0,0,0,.2)}
+  input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;
+    background:var(--c-accent);cursor:pointer;border:2px solid var(--c-card)}
+  select{width:100%;padding:.5rem;border-radius:6px;border:1px solid var(--c-border);
+    background:var(--c-card);color:var(--c-text);font-size:.9rem;cursor:pointer}
+  .toggle-row{display:flex;gap:.5rem}
+  .toggle-row button{flex:1;padding:.45rem;border:1px solid var(--c-border);
+    border-radius:6px;background:var(--c-card);color:var(--c-muted);
+    font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s}
+  .toggle-row button.active{background:var(--c-accent);color:#fff;border-color:var(--c-accent)}
+
+  /* Results */
+  .result-total{display:grid;grid-template-columns:1fr 1px 1fr;gap:1.2rem;
+    align-items:center;text-align:center;padding:1.2rem 1.4rem;
+    background:linear-gradient(135deg,#1e293b,#334155);
+    color:#fff;border-radius:var(--radius);margin:.8rem 0}
+  .result-cell{min-width:0}
+  .result-divider{align-self:stretch;background:rgba(255,255,255,.15)}
+  @media(max-width:640px){
+    .result-total{grid-template-columns:1fr;gap:.9rem;padding:1.2rem}
+    .result-divider{height:1px;width:100%}
+  }
+  .result-total .lbl{font-size:.78rem;opacity:.8;text-transform:uppercase;
+    letter-spacing:.05em;line-height:1.3;display:flex;align-items:center;
+    justify-content:center;gap:.3rem;flex-wrap:wrap}
+  .result-total .amt{font-size:1.95rem;font-weight:800;font-variant-numeric:tabular-nums;
+    line-height:1.15;margin-top:.3rem}
+  .result-total .pct{font-size:.78rem;opacity:.75;margin-top:.25rem;line-height:1.35}
+  .result-total.good #th-val{color:#4ade80}
+  .result-total.meh  #th-val{color:#facc15}
+  .result-total.warn #th-val{color:#f87171}
+
+  /* Breakdown cards */
+  .breakdown{display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+    gap:.6rem;margin:.6rem 0}
+  .bk-item{padding:.7rem;border-radius:8px;border:1px solid var(--c-border);
+    background:var(--c-card)}
+  .bk-item .bk-lbl{font-size:.72rem;font-weight:700;text-transform:uppercase;
+    letter-spacing:.04em;margin-bottom:.15rem;display:flex;align-items:center;gap:.3rem;flex-wrap:wrap}
+  .bk-item .bk-val{font-size:1.3rem;font-weight:700;font-variant-numeric:tabular-nums}
+  .bk-item .bk-note{font-size:.72rem;color:var(--c-muted)}
+  .bk-item.housing .bk-lbl{color:var(--c-housing)}
+  .bk-item.subsist .bk-lbl{color:var(--c-subsist)}
+  .bk-item.child .bk-lbl{color:var(--c-child)}
+  .bk-item.work .bk-lbl{color:var(--c-work)}
+
+  /* Chart */
+  .chart-wrap{position:relative;margin:1rem 0;border-radius:var(--radius);
+    overflow:hidden;border:1px solid var(--c-border);background:var(--c-card)}
+  canvas{display:block;width:100%;height:340px}
+
+  /* Stacked bar */
+  .bar-wrap{height:24px;border-radius:6px;overflow:hidden;display:flex;
+    margin:.6rem 0;background:var(--c-border)}
+  .bar-seg{height:100%;transition:width .2s}
+
+  /* Help tooltip */
+  .help{display:inline-flex;align-items:center;justify-content:center;
+    width:16px;height:16px;border-radius:50%;background:var(--c-border);
+    color:var(--c-muted);font-size:.68rem;font-weight:700;
+    cursor:help;position:relative;user-select:none;
+    text-transform:none;letter-spacing:normal;flex-shrink:0}
+  .help:hover,.help.open{background:var(--c-accent);color:#fff}
+  .help .tip{position:absolute;bottom:calc(100% + 8px);left:50%;
+    transform:translateX(-50%);width:260px;max-width:calc(100vw - 2rem);
+    padding:.7rem .85rem;background:#1e293b;color:#f1f5f9;
+    font-size:.78rem;font-weight:400;line-height:1.45;border-radius:6px;
+    box-shadow:0 4px 14px rgba(0,0,0,.3);white-space:normal;
+    opacity:0;pointer-events:none;transition:opacity .12s;z-index:100;
+    text-align:left}
+  .help:hover .tip,.help.open .tip{opacity:1;pointer-events:auto}
+  .help .tip::after{content:"";position:absolute;top:100%;left:50%;
+    transform:translateX(-50%);border:6px solid transparent;border-top-color:#1e293b}
+
+  /* Footer */
+  footer{margin-top:2rem;padding-top:1rem;border-top:2px solid var(--c-border);
+    font-size:.8rem;color:var(--c-muted)}
+  footer a{color:var(--c-accent)}
+  footer ul{list-style:none;padding:0}
+  footer li{margin:.3rem 0}
+  .disclaimer{margin-top:1rem;padding:.8rem;border-radius:6px;
+    background:var(--c-band);font-size:.78rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Superdávka (DSSP) 2026</h1>
+  <div class="sub">Kalkulačka s vysvětlením — pro jednotlivce i rodinu</div>
+  <span class="law">Zákon č. 151/2025 Sb., o dávce státní sociální pomoci</span>
+</header>
+
+<!-- ══════════════════════ KALKULAČKA ══════════════════════ -->
+<h2>Kalkulačka</h2>
+
+<div class="card">
+  <div class="calc-grid">
+    <div>
+      <div class="input-group">
+        <label>
+          <span>Čistý měsíční příjem domácnosti <span class="help" data-tip="Čistý příjem = po odečtení sociálního pojištění, zdravotního pojištění a daně z příjmu. Hrubá mzda je vyšší. Pokud je dospělých víc, zadejte součet jejich čistých příjmů.">?</span></span>
+          <span class="val" id="lbl-income">15 000 Kč</span>
+        </label>
+        <input type="range" id="income" min="0" max="80000" step="100" value="15000">
+      </div>
+      <div class="input-group" id="rent-group">
+        <label>
+          <span>Měsíční nájemné <span class="help" data-tip="Skutečné nájemné, které platíte. Pokud je vyšší než normativní nájemné (zákonný strop), započítá se jen ten strop.">?</span></span>
+          <span class="val" id="lbl-rent">10 000 Kč</span>
+        </label>
+        <input type="range" id="rent" min="0" max="30000" step="100" value="10000">
+      </div>
+      <div class="input-group" id="owner-info" style="display:none">
+        <label>
+          <span>Vlastnický paušál <span class="help" data-tip="Pro vlastníky a družstevní byty se místo nájemného započítává paušál: 0,30 × normativní nájemné + částka na užívání bytu (§ 31).">?</span></span>
+          <span class="val" id="lbl-owner-paushal">0 Kč</span>
+        </label>
+      </div>
+      <div class="input-group">
+        <label>
+          <span>Počet dospělých <span class="help" data-tip="Kolik dospělých osob žije ve společně posuzované domácnosti. 1 (jednotlivec) nebo 2 (pár, manželé).">?</span></span>
+          <span class="val" id="lbl-adults">1</span>
+        </label>
+        <input type="range" id="adults" min="1" max="2" step="1" value="1">
+      </div>
+      <div class="input-group">
+        <label>
+          <span>Počet nezaopatřených dětí <span class="help" data-tip="Nezaopatřené dítě = dítě do 26 let, které se soustavně připravuje na povolání (studuje) nebo se nemůže připravovat či pracovat ze zdravotních důvodů. Výpočet počítá s dětmi ve věku 6–15 let (průměrný bracket).">?</span></span>
+          <span class="val" id="lbl-children">0</span>
+        </label>
+        <input type="range" id="children" min="0" max="4" step="1" value="0">
+      </div>
+    </div>
+    <div>
+      <div class="input-group">
+        <label>
+          <span>Typ bydlení <span class="help" data-tip="Nájemní = platíte nájem. Vlastní/družstevní = jste vlastník bytu nebo člen družstva — místo skutečného nájmu se použije vlastnický paušál.">?</span></span>
+        </label>
+        <div class="toggle-row" id="housing-type-toggle">
+          <button class="active" data-val="rental">Nájemní</button>
+          <button data-val="owner">Vlastní / družstevní</button>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>
+          <span>Velikost obce <span class="help" data-tip="Normativní nájemné (zákonný strop) závisí na velikosti obce. Praha a Brno mají nejvyšší strop, protože je tam bydlení nejdražší.">?</span></span>
+        </label>
+        <select id="municipality">
+          <option value="small">do 69 999 obyvatel</option>
+          <option value="medium">70 000+ obyvatel</option>
+          <option value="prague" selected>Praha / Brno</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>
+          <span>Status osoby <span class="help" data-tip="Pracovně aktivní = pracuje, je evidován jako uchazeč o zaměstnání, studuje, pečuje o malé dítě apod. Zranitelný = senior v důchodu, invalida 3. stupně, osoba pečující o dítě do 3 let — má vyšší strop nájemného a energií (×1,4).">?</span></span>
+        </label>
+        <div class="toggle-row" id="status-toggle">
+          <button class="active" data-val="active">Pracovně aktivní</button>
+          <button data-val="vulnerable">Zranitelný</button>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>
+          <span>Období <span class="help" data-tip="Od 1. 10. 2026 se zvyšuje životní minimum (ŽM). Pro jednotlivce z 4 860 Kč na 5 500 Kč. Výpočty se tím posunou.">?</span></span>
+        </label>
+        <div class="toggle-row" id="period-toggle">
+          <button class="active" data-val="before">do 30. 9. 2026</button>
+          <button data-val="after">od 1. 10. 2026</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Výsledky -->
+<div class="result-total good" id="result-total">
+  <div class="result-cell">
+    <div class="lbl">Celková superdávka <span class="help" data-tip="Celková měsíční dávka, kterou stát vyplatí. Je součtem složky bydlení, složky živobytí, dětského bonusu a pracovního bonusu.">?</span></div>
+    <div class="amt" id="res-total">0 Kč</div>
+    <div class="pct" id="res-pct"></div>
+  </div>
+  <div class="result-divider"></div>
+  <div class="result-cell">
+    <div class="lbl">Za extra vydělaných 100 Kč na účet dostanu <span class="help" data-tip="Pokud si vyděláte navíc 100 Kč čistého, o kolik se změní váš celkový disponibilní příjem (příjem + dávka). Čím nižší číslo, tím víc si dávka z extra výdělku „vezme zpět“ — a tím menší motivace pracovat víc.">?</span></div>
+    <div class="amt" id="th-val">+100 Kč</div>
+    <div class="pct" id="th-sub">dávka se nemění</div>
+  </div>
+</div>
+
+<div class="bar-wrap" id="bar"></div>
+
+<div class="breakdown">
+  <div class="bk-item housing">
+    <div class="bk-lbl">Složka bydlení <span class="help" data-tip="Část superdávky pokrývající nájem a energie (§ 34). Rozdíl mezi uznanými náklady na bydlení a 30 % čistého příjmu.">?</span></div>
+    <div class="bk-val" id="res-housing">0 Kč</div>
+    <div class="bk-note" id="note-housing"></div>
+  </div>
+  <div class="bk-item subsist">
+    <div class="bk-lbl">Složka živobytí <span class="help" data-tip="Pokrývá základní potřeby (jídlo, oblečení). Pouze pro velmi nízké příjmy (pod 1,43× ŽM).">?</span></div>
+    <div class="bk-val" id="res-subsist">0 Kč</div>
+    <div class="bk-note" id="note-subsist"></div>
+  </div>
+  <div class="bk-item child" id="bk-child" style="display:none">
+    <div class="bk-lbl">Dětský bonus <span class="help" data-tip="Bonus za nezaopatřené děti (§ 38–39). 500 Kč/dítě při nízkém příjmu, 1 000 Kč/dítě ve středním pásmu, klesá k 0 Kč při ~4× ŽM.">?</span></div>
+    <div class="bk-val" id="res-child">0 Kč</div>
+    <div class="bk-note" id="note-child"></div>
+  </div>
+  <div class="bk-item work">
+    <div class="bk-lbl">Pracovní bonus <span class="help" data-tip="Motivace k práci (§ 40–41). 40 % čistého příjmu do 1,6× ŽM, pak klesá. Vyžaduje alespoň jednu jinou složku > 0 Kč.">?</span></div>
+    <div class="bk-val" id="res-work">0 Kč</div>
+    <div class="bk-note" id="note-work"></div>
+  </div>
+</div>
+
+<!-- Graf 1 -->
+<h2>Graf: Skladba superdávky vůči čistému příjmu</h2>
+<div class="card chart-wrap">
+  <canvas id="chart"></canvas>
+</div>
+<div class="note" style="text-align:center;margin-top:.3rem">
+  Svislá čárkovaná čára = aktuálně zvolený čistý příjem. Ostatní parametry dle nastavení výše.
+</div>
+
+<!-- Graf 2 -->
+<h2>Graf: Kolik si odnesu domů při daném čistém příjmu?</h2>
+<div class="card chart-wrap">
+  <canvas id="chart2"></canvas>
+</div>
+<div class="note" style="text-align:center;margin-top:.3rem">
+  Šedá 45° čárkovaná čára = čistý příjem bez dávky. Zelená plocha = přínos superdávky. Čím strmější je křivka, tím víc si odnášíte z každé vydělané koruny.
+</div>
+
+<!-- ══════════════════════ VYSVĚTLENÍ SE VZORCI ══════════════════════ -->
+<h2>Vysvětlení se vzorci</h2>
+
+<div class="card master">
+  <div class="eq">DSSP = S<sub>bydlení</sub> + S<sub>živobytí</sub> + B<sub>děti</sub> + B<sub>práce</sub></div>
+  <div class="note" style="margin-top:.5rem">
+    Všechny složky se sčítají, bez globálního stropu. <strong>P</strong> = rozhodný <em>čistý</em> měsíční příjem domácnosti. <strong>ŽM</strong> = životní minimum celé domácnosti (součet individuálních hodnot všech členů).
+  </div>
+</div>
+
+<!-- Složka bydlení -->
+<div class="card comp housing">
+  <span class="tag">§ 34</span>
+  <h3>1. Složka na bydlení</h3>
+  <div class="f">S<sub>bydlení</sub> = max(0,  R − U)
+
+kde:
+  Nájemní bydlení:
+    R = min(skutečné nájemné, normativní nájemné) + energetický paušál
+  Vlastní/družstevní bydlení (§ 31):
+    R = vlastnický paušál + energetický paušál
+    vlastnický paušál = 0,30 × normativní nájemné + částka na užívání bytu
+
+  U = 0,30 × P                                   … pokud P ≤ 2 × ŽM
+  U = 0,30 × P + 0,10 × (P − 2 × ŽM)             … pokud P &gt; 2 × ŽM</div>
+  <div class="note">
+    <strong>P</strong> je <em>čistý</em> příjem domácnosti. Normativní nájemné a energetický paušál rostou s počtem osob v domácnosti.
+  </div>
+  <details style="margin-top:.6rem">
+    <summary style="cursor:pointer;font-size:.85rem;font-weight:600">Normativní nájemné 2026 (sdělení č. 526/2025 Sb. MPSV)</summary>
+    <table style="margin-top:.4rem">
+      <tr><th>1 osoba</th><th>do 69 999 obyv.</th><th>70 000+ obyv.</th><th>Praha / Brno</th></tr>
+      <tr><td>Standardní</td><td>7 580 Kč</td><td>9 430 Kč</td><td>12 831 Kč</td></tr>
+      <tr><td>Zranitelný</td><td>10 310 Kč</td><td>12 310 Kč</td><td>15 910 Kč</td></tr>
+    </table>
+    <table style="margin-top:.3rem">
+      <tr><th>4 osoby</th><th>do 69 999 obyv.</th><th>70 000+ obyv.</th><th>Praha / Brno</th></tr>
+      <tr><td>Standardní</td><td>11 230 Kč</td><td>12 632 Kč</td><td>17 710 Kč</td></tr>
+      <tr><td>Zranitelný</td><td>14 370 Kč</td><td>16 230 Kč</td><td>22 170 Kč</td></tr>
+    </table>
+    <table style="margin-top:.3rem">
+      <tr><th>Energetický paušál (§ 32)</th><th>Standardní</th><th>Zranitelný (×1,4)</th></tr>
+      <tr><td>1 osoba</td><td>2 300 Kč</td><td>3 220 Kč</td></tr>
+      <tr><td>4 osoby</td><td>3 800 Kč</td><td>5 320 Kč</td></tr>
+    </table>
+    <div class="note" style="margin-top:.3rem">Pro 2 a 3 osoby se hodnoty v této kalkulačce lineárně interpolují (orientační).</div>
+  </details>
+</div>
+
+<!-- Složka živobytí -->
+<div class="card comp subsist">
+  <span class="tag">§ 35–36</span>
+  <h3>2. Složka na živobytí</h3>
+  <div class="f">Podmínka:  P &lt; 1,43 × ŽM
+
+S<sub>živobytí</sub> = max(0,  ŽM − 0,70 × P)</div>
+  <div class="note">
+    Logika: 30 % čistého příjmu jde na bydlení → na živobytí zbývá 70 %. Nad prahem 1,43× ŽM složka nenáleží (příjem je už dostatečný).
+  </div>
+</div>
+
+<!-- Dětský bonus -->
+<div class="card comp child">
+  <span class="tag">§ 38–39</span>
+  <h3>3. Dětský bonus</h3>
+  <div class="f">Pro každé nezaopatřené dítě podle poměru r = P / ŽM:
+
+  r ≤ 1,43              →    500 Kč / dítě
+  1,43 &lt; r ≤ 3          →  1 000 Kč / dítě
+  3 &lt; r &lt; 4             →  1 000 × (4 − r) Kč / dítě
+  r ≥ 4                  →      0 Kč
+
+B<sub>děti</sub> = částka na dítě × počet dětí</div>
+  <div class="note">
+    Klesající část (3 &lt; r &lt; 4) zajišťuje plynulý přechod na nulu — žádný skokový propad.
+  </div>
+</div>
+
+<!-- Pracovní bonus -->
+<div class="card comp work">
+  <span class="tag">§ 40–41</span>
+  <h3>4. Pracovní bonus</h3>
+  <div class="f">Podmínka:  alespoň jedna jiná složka &gt; 0 Kč
+
+Fáze nárůstu (P ≤ 1,6 × ŽM):
+  B<sub>práce</sub> = 0,40 × P
+
+Fáze vyběhnutí (P &gt; 1,6 × ŽM):
+  B<sub>práce</sub> = max(0,  0,40 × (1,6 × ŽM) − 0,30 × (P − 1,6 × ŽM))</div>
+  <div class="note">
+    Pro jednotlivce (ŽM = 4 860 Kč): vrchol při P = 7 776 Kč → bonus 3 110 Kč. Klesá na 0 při P ≈ 18 144 Kč. Pro větší domácnost se bod vrcholu i konce posouvá výše (ŽM je vyšší).
+  </div>
+</div>
+
+<!-- Koeficienty -->
+<div class="card">
+  <h3>Přehled klíčových koeficientů</h3>
+  <table>
+    <tr><th>Koeficient</th><th>Význam</th><th>§</th></tr>
+    <tr><td>0,30</td><td>Podíl čistého příjmu na bydlení</td><td>§ 34</td></tr>
+    <tr><td>0,10</td><td>Dodatečná redukce nad 2× ŽM</td><td>§ 34</td></tr>
+    <tr><td>1,43</td><td>Hranice živobytí &amp; režimu energií</td><td>§ 35</td></tr>
+    <tr><td>1,6</td><td>Hranice plného pracovního bonusu</td><td>§ 41</td></tr>
+    <tr><td>0,40</td><td>Sazba pracovního bonusu</td><td>§ 41</td></tr>
+    <tr><td>0,30</td><td>Sazba redukce prac. bonusu nad 1,6× ŽM</td><td>§ 41</td></tr>
+    <tr><td>1,4</td><td>Násobitel energií pro zranitelné</td><td>§ 32</td></tr>
+  </table>
+</div>
+
+<!-- ══════════════════════ PRÁVNÍ ZÁKLAD ══════════════════════ -->
+<footer>
+  <h2>Právní základ a zdroje</h2>
+  <ul>
+    <li><strong>Zákon č. 151/2025 Sb.</strong> — o dávce státní sociální pomoci (účinnost 1. 10. 2025)
+      — <a href="https://www.zakonyprolidi.cz/cs/2025-151" target="_blank">zakonyprolidi.cz</a>
+      | <a href="https://e-sbirka.gov.cz/sb/2025/151" target="_blank">e-Sbírka</a></li>
+    <li><strong>Zákon č. 152/2025 Sb.</strong> — změnový zákon (novely souvisejících předpisů)</li>
+    <li><strong>Nařízení vlády č. 361/2025 Sb.</strong> — částky životního a existenčního minima
+      — <a href="https://www.zakonyprolidi.cz/cs/2025-361" target="_blank">zakonyprolidi.cz</a></li>
+    <li><strong>Sdělení MPSV č. 526/2025 Sb.</strong> — normativní nájemné pro rok 2026</li>
+    <li><strong>Zákon č. 110/2006 Sb.</strong> — o životním a existenčním minimu</li>
+  </ul>
+  <div class="disclaimer">
+    <strong>Upozornění:</strong> Tato kalkulačka je <em>orientační</em> a slouží pro ilustraci vzorce výpočtu.
+    Pro přesný výpočet použijte <a href="https://mpsv.gov.cz/mpsv-spustilo-orientacni-kalkulacku-pro-vypocet-superdavky" target="_blank">oficiální kalkulačku MPSV</a>
+    nebo podejte žádost přes portál <a href="https://jenda.mpsv.cz" target="_blank">Jenda</a>.
+    Zjednodušení: všechen příjem = z práce, energie jako paušál (ne skutečné náklady), normativní nájemné pro 2–3 osoby se lineárně interpoluje.
+  </div>
+</footer>
+
+</div><!-- .wrap -->
+
+<script>
+// ═══ Constants ═══
+const ZM_PERSON = {
+  before: { single: 4860, firstInMulti: 4470, otherAdult: 4040, child: 3050 },
+  after:  { single: 5500, firstInMulti: 5000, otherAdult: 3750, child: 3050 }
+};
+const NORM_RENT_BY = {
+  active:     { 1: {small: 7580, medium: 9430, prague: 12831},
+                4: {small: 11230, medium: 12632, prague: 17710} },
+  vulnerable: { 1: {small: 10310, medium: 12310, prague: 15910},
+                4: {small: 14370, medium: 16230, prague: 22170} }
+};
+const ENERGY_BY = {
+  active:     { 1: 2300, 4: 3800 },
+  vulnerable: { 1: 3220, 4: 5320 }
+};
+const USAGE_FEE_BY = { 1: 880, 4: 1200 };
+
+// ═══ Parametric lookups (linear interpolation 1↔4 persons) ═══
+function interp(v1, v4, n) {
+  const clamped = Math.max(1, Math.min(4, n));
+  return v1 + (v4 - v1) * ((clamped - 1) / 3);
+}
+function zmTotal(adults, children, per) {
+  const z = ZM_PERSON[per];
+  if (adults === 1 && children === 0) return z.single;
+  return z.firstInMulti + (adults - 1) * z.otherAdult + children * z.child;
+}
+function normRentFor(persons, stat, muni) {
+  return interp(NORM_RENT_BY[stat][1][muni], NORM_RENT_BY[stat][4][muni], persons);
+}
+function energyFor(persons, stat) {
+  return interp(ENERGY_BY[stat][1], ENERGY_BY[stat][4], persons);
+}
+function usageFeeFor(persons) {
+  return interp(USAGE_FEE_BY[1], USAGE_FEE_BY[4], persons);
+}
+
+// ═══ Unified calculation (single or family) ═══
+function calcDSSP(income, rent, muni, stat, per, hType, adults, children) {
+  const zm = zmTotal(adults, children, per);
+  const persons = adults + children;
+  const normRent = normRentFor(persons, stat, muni);
+  const energy = energyFor(persons, stat);
+
+  // 1. Housing (§ 34)
+  let recognizedCosts, ownerPaushal = 0;
+  if (hType === 'owner') {
+    ownerPaushal = 0.30 * normRent + usageFeeFor(persons);
+    recognizedCosts = ownerPaushal + energy;
+  } else {
+    recognizedCosts = Math.min(rent, normRent) + energy;
+  }
+  let incomeShare = 0.30 * income;
+  if (income > 2 * zm) incomeShare += 0.10 * (income - 2 * zm);
+  const housing = Math.max(0, recognizedCosts - incomeShare);
+
+  // 2. Subsistence (§ 35-36)
+  let subsistence = 0;
+  if (income < 1.43 * zm) {
+    subsistence = Math.max(0, zm - 0.70 * income);
+  }
+
+  // 3. Child bonus (§ 38-39)
+  let childBonus = 0;
+  if (children > 0) {
+    const ratio = income / zm;
+    let perChild = 0;
+    if (ratio < 4) {
+      if (ratio <= 1.43) perChild = 500;
+      else if (ratio <= 3) perChild = 1000;
+      else perChild = Math.max(0, 1000 * (4 - ratio));
+    }
+    childBonus = perChild * children;
+  }
+
+  // 4. Work bonus (§ 40-41)
+  let workBonus = 0;
+  const hasOther = housing + subsistence + childBonus > 0;
+  if (income > 0 && hasOther) {
+    const thr = 1.6 * zm;
+    if (income <= thr) workBonus = 0.40 * income;
+    else workBonus = Math.max(0, 0.40 * thr - 0.30 * (income - thr));
+  }
+
+  return {
+    housing, subsistence, childBonus, workBonus,
+    total: housing + subsistence + childBonus + workBonus,
+    zm, normRent, energy, recognizedCosts, ownerPaushal, persons
+  };
+}
+
+// ═══ DOM refs & state ═══
+const $income = document.getElementById('income');
+const $rent = document.getElementById('rent');
+const $muni = document.getElementById('municipality');
+const $adults = document.getElementById('adults');
+const $children = document.getElementById('children');
+const $lblIncome = document.getElementById('lbl-income');
+const $lblRent = document.getElementById('lbl-rent');
+const $lblOwner = document.getElementById('lbl-owner-paushal');
+const $lblAdults = document.getElementById('lbl-adults');
+const $lblChildren = document.getElementById('lbl-children');
+const $rentGroup = document.getElementById('rent-group');
+const $ownerInfo = document.getElementById('owner-info');
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+const canvas2 = document.getElementById('chart2');
+const ctx2 = canvas2.getContext('2d');
+
+let status = 'active';
+let period = 'before';
+let housingType = 'rental';
+
+// Toggle buttons
+document.querySelectorAll('.toggle-row').forEach(row => {
+  row.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      row.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (row.id === 'status-toggle') status = btn.dataset.val;
+      if (row.id === 'period-toggle') period = btn.dataset.val;
+      if (row.id === 'housing-type-toggle') {
+        housingType = btn.dataset.val;
+        $rentGroup.style.display = housingType === 'rental' ? '' : 'none';
+        $ownerInfo.style.display = housingType === 'owner' ? '' : 'none';
+      }
+      update();
+    });
+  });
+});
+[$income, $rent, $muni, $adults, $children].forEach(el => el.addEventListener('input', update));
+
+// Help tooltips (hover on desktop, tap on mobile)
+document.querySelectorAll('.help').forEach(el => {
+  const tip = document.createElement('span');
+  tip.className = 'tip';
+  tip.textContent = el.dataset.tip || '';
+  el.appendChild(tip);
+  el.addEventListener('click', e => {
+    e.stopPropagation();
+    const wasOpen = el.classList.contains('open');
+    document.querySelectorAll('.help.open').forEach(o => o.classList.remove('open'));
+    if (!wasOpen) el.classList.add('open');
+  });
+});
+document.addEventListener('click', () => {
+  document.querySelectorAll('.help.open').forEach(o => o.classList.remove('open'));
+});
+
+// ═══ Formatting ═══
+function fmt(n) { return Math.round(n).toLocaleString('cs-CZ') + ' Kč'; }
+
+// ═══ Update UI ═══
+function update() {
+  const income = +$income.value;
+  const rent = +$rent.value;
+  const muni = $muni.value;
+  const adults = +$adults.value;
+  const children = +$children.value;
+  $lblIncome.textContent = fmt(income);
+  $lblRent.textContent = fmt(rent);
+  $lblAdults.textContent = adults;
+  $lblChildren.textContent = children;
+
+  const r = calcDSSP(income, rent, muni, status, period, housingType, adults, children);
+
+  if (housingType === 'owner') $lblOwner.textContent = fmt(r.ownerPaushal);
+
+  document.getElementById('res-total').textContent = fmt(r.total);
+  document.getElementById('res-housing').textContent = fmt(r.housing);
+  document.getElementById('res-subsist').textContent = fmt(r.subsistence);
+  document.getElementById('res-work').textContent = fmt(r.workBonus);
+
+  // Child bonus — show only when children > 0
+  const $bkChild = document.getElementById('bk-child');
+  if (children > 0) {
+    $bkChild.style.display = '';
+    document.getElementById('res-child').textContent = fmt(r.childBonus);
+    const ratio = income / r.zm;
+    let childNote;
+    if (ratio <= 1.43) childNote = `500 × ${children} dětí`;
+    else if (ratio <= 3) childNote = `1 000 × ${children} dětí`;
+    else if (ratio < 4) childNote = `${Math.round(1000 * (4 - ratio))} × ${children} (klesá)`;
+    else childNote = 'P ≥ 4× ŽM — nenáleží';
+    document.getElementById('note-child').textContent = childNote;
+  } else {
+    $bkChild.style.display = 'none';
+  }
+
+  // Percentage of income
+  const pctEl = document.getElementById('res-pct');
+  if (income > 0) pctEl.textContent = (r.total / income * 100).toFixed(0) + ' % čistého příjmu';
+  else pctEl.textContent = '';
+
+  // Notes
+  const uVal = income > 2*r.zm ? 0.30*income + 0.10*(income-2*r.zm) : 0.30*income;
+  const housingNote = housingType === 'owner'
+    ? (r.housing > 0 ? `Paušál ${fmt(r.ownerPaushal)} + E ${fmt(r.energy)} = R ${fmt(r.recognizedCosts)}, U = ${fmt(uVal)}` : 'Příjem pokrývá bydlení')
+    : (r.housing > 0 ? `R = ${fmt(r.recognizedCosts)}, U = ${fmt(uVal)}` : 'Příjem pokrývá bydlení');
+  document.getElementById('note-housing').textContent = housingNote;
+  document.getElementById('note-subsist').textContent =
+    income < 1.43 * r.zm ? `ŽM = ${fmt(r.zm)}, 70 % P = ${fmt(0.7*income)}` : `P ≥ 1,43 × ŽM (${fmt(1.43*r.zm)})`;
+  const wThr = 1.6 * r.zm;
+  document.getElementById('note-work').textContent =
+    r.workBonus > 0 ? (income <= wThr ? `40 % × ${fmt(income)}` : `peak ${fmt(0.4*wThr)} − 30 % × ${fmt(income-wThr)}`) :
+    (r.housing + r.subsistence + r.childBonus === 0 ? 'Žádná jiná složka > 0' : 'Příjem mimo rozsah');
+
+  // Stacked bar (with child bonus segment)
+  const barEl = document.getElementById('bar');
+  const maxBar = Math.max(r.total, 1);
+  const segs = [
+    { w: r.housing / maxBar * 100, c: 'var(--c-housing)' },
+    { w: r.subsistence / maxBar * 100, c: 'var(--c-subsist)' },
+    { w: r.childBonus / maxBar * 100, c: 'var(--c-child)' },
+    { w: r.workBonus / maxBar * 100, c: 'var(--c-work)' },
+  ];
+  barEl.innerHTML = segs.map(s => `<div class="bar-seg" style="width:${s.w}%;background:${s.c}"></div>`).join('');
+
+  // Take-home per extra 100 Kč earned
+  const step = 100;
+  const rNext = calcDSSP(income + step, rent, muni, status, period, housingType, adults, children);
+  const benefitDelta = rNext.total - r.total;
+  const takeHome = step + benefitDelta;
+  const thEl = document.getElementById('result-total');
+  const thValEl = document.getElementById('th-val');
+  const thSubEl = document.getElementById('th-sub');
+  const sign = takeHome >= 0 ? '+' : '−';
+  thValEl.textContent = sign + fmt(Math.abs(takeHome));
+  thEl.classList.remove('good', 'warn', 'meh');
+  if (takeHome < 30) thEl.classList.add('warn');
+  else if (takeHome < 70) thEl.classList.add('meh');
+  else thEl.classList.add('good');
+  const absDelta = Math.abs(Math.round(benefitDelta));
+  if (absDelta === 0) thSubEl.textContent = 'dávka se nemění';
+  else if (benefitDelta < 0) thSubEl.textContent = `dávka se sníží o ${absDelta} Kč`;
+  else thSubEl.textContent = `dávka přidá dalších ${absDelta} Kč`;
+
+  drawChart(income, rent, muni, adults, children);
+  drawChart2(income, rent, muni, adults, children);
+}
+
+// Helper: adaptive max income for charts (scales with household size)
+function chartMaxIncome(adults, children) {
+  const zm = zmTotal(adults, children, period);
+  return Math.max(45000, Math.ceil(zm * 4.5 / 5000) * 5000);
+}
+
+// ═══ Chart 1: Composition ═══
+function drawChart(currentIncome, rent, muni, adults, children) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const W = rect.width, H = rect.height;
+  const pad = { t: 20, r: 20, b: 60, l: 55 };  // extra bottom room for 2-row threshold labels
+  const cw = W - pad.l - pad.r, ch = H - pad.t - pad.b;
+  ctx.clearRect(0, 0, W, H);
+
+  const maxIncome = chartMaxIncome(adults, children);
+  const steps = 200;
+  const series = { housing: [], subsist: [], child: [], work: [], total: [] };
+  let maxY = 0;
+  for (let i = 0; i <= steps; i++) {
+    const inc = (i / steps) * maxIncome;
+    const rr = calcDSSP(inc, rent, muni, status, period, housingType, adults, children);
+    series.housing.push(rr.housing);
+    series.subsist.push(rr.subsistence);
+    series.child.push(rr.childBonus);
+    series.work.push(rr.workBonus);
+    series.total.push(rr.total);
+    if (rr.total > maxY) maxY = rr.total;
+  }
+  maxY = Math.ceil(maxY / 1000) * 1000 || 1000;
+
+  function x(v) { return pad.l + (v / maxIncome) * cw; }
+  function y(v) { return pad.t + ch - (v / maxY) * ch; }
+
+  const cs = getComputedStyle(document.documentElement);
+  const gridColor = cs.getPropertyValue('--c-border').trim();
+  const mutedColor = cs.getPropertyValue('--c-muted').trim();
+
+  // Grid
+  ctx.strokeStyle = gridColor; ctx.lineWidth = 0.5;
+  ctx.font = '11px system-ui'; ctx.fillStyle = mutedColor;
+  ctx.textAlign = 'right';
+  for (let v = 0; v <= maxY; v += Math.max(1000, Math.ceil(maxY / 6 / 1000) * 1000)) {
+    ctx.beginPath(); ctx.moveTo(pad.l, y(v)); ctx.lineTo(pad.l + cw, y(v)); ctx.stroke();
+    ctx.fillText(Math.round(v / 1000) + 'k', pad.l - 6, y(v) + 4);
+  }
+  ctx.textAlign = 'center';
+  const xStep = maxIncome >= 70000 ? 10000 : (maxIncome >= 50000 ? 10000 : 5000);
+  for (let v = 0; v <= maxIncome; v += xStep) {
+    ctx.beginPath(); ctx.moveTo(x(v), pad.t); ctx.lineTo(x(v), pad.t + ch); ctx.stroke();
+    ctx.fillText(Math.round(v / 1000) + 'k', x(v), pad.t + ch + 16);
+  }
+  ctx.fillText('Čistý příjem (Kč)', pad.l + cw / 2, H - 4);
+  ctx.save(); ctx.translate(12, pad.t + ch / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Dávka (Kč)', 0, 0); ctx.restore();
+
+  // Thresholds — staggered in 2 rows to prevent overlap
+  const zm = zmTotal(adults, children, period);
+  const thresholds = [
+    { v: 1.43 * zm, lbl: '1,43×ŽM' },
+    { v: 1.6 * zm,  lbl: '1,6×ŽM' },
+    { v: 2 * zm,    lbl: '2×ŽM' },
+    { v: 3.73 * zm, lbl: '3,73×ŽM' },
+  ].filter(t => t.v <= maxIncome);
+
+  ctx.setLineDash([3, 3]); ctx.strokeStyle = mutedColor; ctx.lineWidth = 0.8;
+  ctx.fillStyle = mutedColor;
+  const minGapPx = 52;
+  const rowYs = [pad.t + ch + 30, pad.t + ch + 46];
+  const rowMaxX = [-Infinity, -Infinity];
+  thresholds.forEach(t => {
+    const tx = x(t.v);
+    ctx.beginPath(); ctx.moveTo(tx, pad.t); ctx.lineTo(tx, pad.t + ch); ctx.stroke();
+    const row = (rowMaxX[0] + minGapPx <= tx) ? 0 : 1;
+    ctx.fillText(t.lbl, tx, rowYs[row]);
+    rowMaxX[row] = tx;
+  });
+  ctx.setLineDash([]);
+
+  // Total area fill
+  ctx.beginPath();
+  ctx.moveTo(pad.l, y(0));
+  for (let i = 0; i <= steps; i++) ctx.lineTo(pad.l + (i / steps) * cw, y(series.total[i]));
+  ctx.lineTo(pad.l + cw, y(0));
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(30,41,59,.06)';
+  ctx.fill();
+
+  // Component lines
+  function drawLine(data, color, width) {
+    ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = width;
+    for (let i = 0; i <= steps; i++) {
+      const px = pad.l + (i / steps) * cw;
+      const py = y(data[i]);
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+  drawLine(series.housing, cs.getPropertyValue('--c-housing').trim(), 2);
+  drawLine(series.subsist, cs.getPropertyValue('--c-subsist').trim(), 2);
+  if (children > 0) drawLine(series.child, cs.getPropertyValue('--c-child').trim(), 2);
+  drawLine(series.work, cs.getPropertyValue('--c-work').trim(), 2);
+  drawLine(series.total, cs.getPropertyValue('--c-total').trim(), 2.5);
+
+  // Current income marker
+  ctx.setLineDash([6, 4]);
+  ctx.strokeStyle = cs.getPropertyValue('--c-accent').trim();
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(x(currentIncome), pad.t); ctx.lineTo(x(currentIncome), pad.t + ch); ctx.stroke();
+  ctx.setLineDash([]);
+  const curR = calcDSSP(currentIncome, rent, muni, status, period, housingType, adults, children);
+  ctx.beginPath();
+  ctx.arc(x(currentIncome), y(curR.total), 5, 0, Math.PI * 2);
+  ctx.fillStyle = cs.getPropertyValue('--c-accent').trim(); ctx.fill();
+  ctx.strokeStyle = cs.getPropertyValue('--c-card').trim(); ctx.lineWidth = 2; ctx.stroke();
+
+  // Legend
+  const legends = [
+    { lbl: 'Celkem', c: cs.getPropertyValue('--c-total').trim() },
+    { lbl: 'Bydlení', c: cs.getPropertyValue('--c-housing').trim() },
+    { lbl: 'Živobytí', c: cs.getPropertyValue('--c-subsist').trim() },
+  ];
+  if (children > 0) legends.push({ lbl: 'Děti', c: cs.getPropertyValue('--c-child').trim() });
+  legends.push({ lbl: 'Prac. bonus', c: cs.getPropertyValue('--c-work').trim() });
+  let lx = pad.l + 8;
+  legends.forEach(l => {
+    ctx.fillStyle = l.c; ctx.fillRect(lx, pad.t + 4, 14, 3);
+    ctx.fillStyle = mutedColor; ctx.textAlign = 'left';
+    ctx.fillText(l.lbl, lx + 18, pad.t + 10);
+    lx += ctx.measureText(l.lbl).width + 30;
+  });
+}
+
+// ═══ Chart 2: Disposable income ═══
+function drawChart2(currentIncome, rent, muni, adults, children) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas2.getBoundingClientRect();
+  canvas2.width = rect.width * dpr;
+  canvas2.height = rect.height * dpr;
+  ctx2.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const W = rect.width, H = rect.height;
+  const pad = { t: 20, r: 20, b: 45, l: 60 };
+  const cw = W - pad.l - pad.r, ch = H - pad.t - pad.b;
+  ctx2.clearRect(0, 0, W, H);
+
+  const maxIncome = chartMaxIncome(adults, children);
+  const steps = 200;
+  const disposable = [];
+  let maxY = 0;
+  for (let i = 0; i <= steps; i++) {
+    const inc = (i / steps) * maxIncome;
+    const rr = calcDSSP(inc, rent, muni, status, period, housingType, adults, children);
+    const d = inc + rr.total;
+    disposable.push(d);
+    if (d > maxY) maxY = d;
+  }
+  maxY = Math.ceil(maxY / 5000) * 5000 || 5000;
+
+  function x(v) { return pad.l + (v / maxIncome) * cw; }
+  function y(v) { return pad.t + ch - (v / maxY) * ch; }
+
+  const cs = getComputedStyle(document.documentElement);
+  const gridColor = cs.getPropertyValue('--c-border').trim();
+  const mutedColor = cs.getPropertyValue('--c-muted').trim();
+  const accentColor = cs.getPropertyValue('--c-accent').trim();
+  const totalColor = cs.getPropertyValue('--c-total').trim();
+
+  ctx2.strokeStyle = gridColor; ctx2.lineWidth = 0.5;
+  ctx2.font = '11px system-ui'; ctx2.fillStyle = mutedColor;
+  ctx2.textAlign = 'right';
+  for (let v = 0; v <= maxY; v += Math.max(5000, Math.ceil(maxY / 6 / 5000) * 5000)) {
+    ctx2.beginPath(); ctx2.moveTo(pad.l, y(v)); ctx2.lineTo(pad.l + cw, y(v)); ctx2.stroke();
+    ctx2.fillText(Math.round(v / 1000) + 'k', pad.l - 6, y(v) + 4);
+  }
+  ctx2.textAlign = 'center';
+  const xStep = maxIncome >= 70000 ? 10000 : (maxIncome >= 50000 ? 10000 : 5000);
+  for (let v = 0; v <= maxIncome; v += xStep) {
+    ctx2.beginPath(); ctx2.moveTo(x(v), pad.t); ctx2.lineTo(x(v), pad.t + ch); ctx2.stroke();
+    ctx2.fillText(Math.round(v / 1000) + 'k', x(v), pad.t + ch + 16);
+  }
+  ctx2.fillText('Čistý příjem (Kč)', pad.l + cw / 2, H - 4);
+  ctx2.save(); ctx2.translate(12, pad.t + ch / 2); ctx2.rotate(-Math.PI / 2);
+  ctx2.fillText('Čistý příjem + dávka (Kč)', 0, 0); ctx2.restore();
+
+  // 45° ref
+  ctx2.setLineDash([4, 4]);
+  ctx2.strokeStyle = mutedColor; ctx2.lineWidth = 1;
+  ctx2.beginPath();
+  ctx2.moveTo(x(0), y(0));
+  ctx2.lineTo(x(Math.min(maxIncome, maxY)), y(Math.min(maxIncome, maxY)));
+  ctx2.stroke();
+  ctx2.setLineDash([]);
+
+  // Benefit area fill
+  ctx2.beginPath();
+  for (let i = 0; i <= steps; i++) {
+    const inc = (i / steps) * maxIncome;
+    const py = y(disposable[i]);
+    i === 0 ? ctx2.moveTo(x(inc), py) : ctx2.lineTo(x(inc), py);
+  }
+  for (let i = steps; i >= 0; i--) {
+    const inc = (i / steps) * maxIncome;
+    ctx2.lineTo(x(inc), y(inc));
+  }
+  ctx2.closePath();
+  ctx2.fillStyle = 'rgba(34,197,94,.1)';
+  ctx2.fill();
+
+  // Disposable line
+  ctx2.beginPath();
+  ctx2.strokeStyle = totalColor; ctx2.lineWidth = 2.5;
+  for (let i = 0; i <= steps; i++) {
+    const inc = (i / steps) * maxIncome;
+    const py = y(disposable[i]);
+    i === 0 ? ctx2.moveTo(x(inc), py) : ctx2.lineTo(x(inc), py);
+  }
+  ctx2.stroke();
+
+  // Current marker
+  ctx2.setLineDash([6, 4]);
+  ctx2.strokeStyle = accentColor; ctx2.lineWidth = 1.5;
+  ctx2.beginPath();
+  ctx2.moveTo(x(currentIncome), pad.t); ctx2.lineTo(x(currentIncome), pad.t + ch); ctx2.stroke();
+  ctx2.setLineDash([]);
+  const curR = calcDSSP(currentIncome, rent, muni, status, period, housingType, adults, children);
+  const curDisp = currentIncome + curR.total;
+  ctx2.beginPath();
+  ctx2.arc(x(currentIncome), y(curDisp), 5, 0, Math.PI * 2);
+  ctx2.fillStyle = accentColor; ctx2.fill();
+  ctx2.strokeStyle = cs.getPropertyValue('--c-card').trim(); ctx2.lineWidth = 2; ctx2.stroke();
+
+  // Legend
+  ctx2.textAlign = 'left'; ctx2.fillStyle = mutedColor;
+  let lx = pad.l + 8;
+  ctx2.fillStyle = totalColor;
+  ctx2.fillRect(lx, pad.t + 4, 14, 3);
+  ctx2.fillStyle = mutedColor;
+  ctx2.fillText('Čistý příjem + dávka', lx + 18, pad.t + 10);
+  lx += 150;
+  ctx2.setLineDash([4, 4]);
+  ctx2.strokeStyle = mutedColor; ctx2.lineWidth = 1;
+  ctx2.beginPath(); ctx2.moveTo(lx, pad.t + 6); ctx2.lineTo(lx + 14, pad.t + 6); ctx2.stroke();
+  ctx2.setLineDash([]);
+  ctx2.fillText('Bez dávky (45°)', lx + 18, pad.t + 10);
+}
+
+window.addEventListener('resize', update);
+update();
+</script>
+</body>
+</html>
