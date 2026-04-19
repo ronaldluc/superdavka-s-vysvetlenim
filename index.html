@@ -736,10 +736,8 @@ function update() {
     $bkChild.style.display = 'none';
   }
 
-  // Percentage of income
-  const pctEl = document.getElementById('res-pct');
-  if (income > 0) pctEl.textContent = (r.total / income * 100).toFixed(0) + ' % čistého příjmu';
-  else pctEl.textContent = '';
+  // Příjem + dávka = celkový disponibilní příjem
+  document.getElementById('res-pct').textContent = 'Příjem + dávka: ' + fmt(income + r.total);
 
   // Notes
   const uVal = income > 2*r.zm ? 0.30*income + 0.10*(income-2*r.zm) : 0.30*income;
