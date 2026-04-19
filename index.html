@@ -21,6 +21,7 @@
     --c-total:#f1f5f9;--c-band:rgba(96,165,250,.08);
   }}
   *{margin:0;padding:0;box-sizing:border-box}
+  html,body{overflow-x:hidden;max-width:100%}
   body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
     background:var(--c-bg);color:var(--c-text);line-height:1.6;
     padding:0 1rem 4rem}
@@ -96,11 +97,16 @@
     background:var(--c-accent);cursor:pointer;border:2px solid var(--c-card)}
   select{width:100%;padding:.5rem;border-radius:6px;border:1px solid var(--c-border);
     background:var(--c-card);color:var(--c-text);font-size:.9rem;cursor:pointer}
-  .toggle-row{display:flex;gap:.5rem}
-  .toggle-row button{flex:1;padding:.45rem;border:1px solid var(--c-border);
+  .toggle-row{display:flex;gap:.4rem;min-width:0}
+  .toggle-row button{flex:1;min-width:0;padding:.45rem .3rem;border:1px solid var(--c-border);
     border-radius:6px;background:var(--c-card);color:var(--c-muted);
     font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s}
   .toggle-row button.active{background:var(--c-accent);color:#fff;border-color:var(--c-accent)}
+  /* Compact numeric toggles (adults / children by age) */
+  #adults-toggle button,
+  #children-u6-toggle button,
+  #children-6-15-toggle button,
+  #children-15-26-toggle button{padding:.2rem .2rem;font-size:.78rem;line-height:1.2}
 
   /* Children-by-age rows */
   .child-rows{display:flex;flex-direction:column;gap:.45rem}
@@ -126,6 +132,7 @@
   .result-total .lbl{font-size:.78rem;opacity:.8;text-transform:uppercase;
     letter-spacing:.05em;line-height:1.3;display:flex;align-items:center;
     justify-content:center;gap:.3rem;flex-wrap:wrap}
+  .result-total .lbl .nowrap{display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap}
   .result-total .amt{font-size:1.95rem;font-weight:800;font-variant-numeric:tabular-nums;
     line-height:1.15;margin-top:.3rem}
   .result-total .pct{font-size:.78rem;opacity:.75;margin-top:.25rem;line-height:1.35}
@@ -320,7 +327,7 @@
   </div>
   <div class="result-divider"></div>
   <div class="result-cell">
-    <div class="lbl">Za extra vydělaných 100 Kč na účet dostanu <span class="help" data-tip="Pokud si vyděláte navíc 100 Kč čistého, o kolik se změní váš celkový disponibilní příjem (příjem + dávka). Čím nižší číslo, tím víc si dávka z extra výdělku „vezme zpět“ — a tím menší motivace pracovat víc.">?</span></div>
+    <div class="lbl">Za extra vydělaných 100 Kč na účet <span class="nowrap">dostanu <span class="help" data-tip="Pokud si vyděláte navíc 100 Kč čistého, o kolik se změní váš celkový disponibilní příjem (příjem + dávka). Čím nižší číslo, tím víc si dávka z extra výdělku „vezme zpět“ — a tím menší motivace pracovat víc.">?</span></span></div>
     <div class="amt" id="th-val">+100 Kč</div>
     <div class="pct" id="th-sub">dávka se nemění</div>
   </div>
