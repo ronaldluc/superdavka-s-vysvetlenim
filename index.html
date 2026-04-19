@@ -25,15 +25,16 @@
     background:var(--c-bg);color:var(--c-text);line-height:1.6;
     padding:0 1rem 4rem}
   .wrap{max-width:900px;margin:0 auto}
-  header{text-align:center;padding:2.5rem 0 1.5rem}
-  header h1{font-size:2rem;font-weight:800;letter-spacing:-.02em}
-  header .sub{color:var(--c-muted);font-size:.95rem;margin-top:.3rem}
-  header .law{display:inline-block;margin-top:.6rem;font-size:.8rem;
-    padding:.25rem .7rem;border-radius:20px;
+  header{text-align:center;padding:1.2rem 0 .6rem}
+  header h1{font-size:1.7rem;font-weight:800;letter-spacing:-.02em}
+  header .sub{color:var(--c-muted);font-size:.9rem;margin-top:.2rem}
+  header .law{display:inline-block;margin-top:.45rem;font-size:.75rem;
+    padding:.2rem .6rem;border-radius:20px;
     background:var(--c-band);color:var(--c-accent);font-weight:600}
 
   h2{font-size:1.25rem;font-weight:700;margin:2rem 0 .8rem;
     padding-bottom:.4rem;border-bottom:2px solid var(--c-border)}
+  header + h2{margin-top:.6rem}
   h3{font-size:1rem;font-weight:700;margin:1.2rem 0 .4rem}
 
   .card{background:var(--c-card);border:1px solid var(--c-border);
@@ -52,11 +53,18 @@
   .comp.child{border-color:var(--c-child)}
   .comp.work{border-color:var(--c-work)}
   .comp .tag{display:inline-block;font-size:.7rem;font-weight:700;
-    padding:.1rem .45rem;border-radius:4px;color:#fff;margin-bottom:.3rem}
+    padding:.1rem .45rem;border-radius:4px;color:#fff;margin-bottom:.3rem;
+    text-decoration:none}
+  .comp .tag::after{content:" ↗";font-size:.75em;opacity:.75}
+  .comp .tag:hover{opacity:.88}
   .comp.housing .tag{background:var(--c-housing)}
   .comp.subsist .tag{background:var(--c-subsist)}
   .comp.child .tag{background:var(--c-child)}
   .comp.work .tag{background:var(--c-work)}
+  a.paragraf{color:var(--c-accent);text-decoration:none;font-weight:600;
+    white-space:nowrap}
+  a.paragraf:hover{text-decoration:underline}
+  a.paragraf::after{content:" ↗";font-size:.85em;opacity:.7}
   .f{font-family:"Courier New",Courier,monospace;font-size:.88rem;
     background:var(--c-band);padding:.55rem .8rem;border-radius:6px;
     margin:.4rem 0;line-height:1.7;overflow-x:auto;white-space:pre-wrap}
@@ -168,7 +176,7 @@
 
 <header>
   <h1>Superdávka (DSSP) 2026</h1>
-  <div class="sub">Kalkulačka s vysvětlením — pro jednotlivce i rodinu</div>
+  <div class="sub">Interaktivní kalkulačka s vysvětlením níže.</div>
   <span class="law">Zákon č. 151/2025 Sb., o dávce státní sociální pomoci</span>
 </header>
 
@@ -200,17 +208,26 @@
       </div>
       <div class="input-group">
         <label>
-          <span>Počet dospělých <span class="help" data-tip="Kolik dospělých osob žije ve společně posuzované domácnosti. 1 (jednotlivec) nebo 2 (pár, manželé).">?</span></span>
-          <span class="val" id="lbl-adults">1</span>
+          <span>Počet dospělých <span class="help" data-tip="Kolik dospělých osob žije ve společně posuzované domácnosti. Nejčastěji 1 (jednotlivec) nebo 2 (pár, manželé).">?</span></span>
         </label>
-        <input type="range" id="adults" min="1" max="2" step="1" value="1">
+        <div class="toggle-row" id="adults-toggle">
+          <button class="active" data-val="1">1</button>
+          <button data-val="2">2</button>
+          <button data-val="3">3</button>
+          <button data-val="4">4</button>
+        </div>
       </div>
       <div class="input-group">
         <label>
           <span>Počet nezaopatřených dětí <span class="help" data-tip="Nezaopatřené dítě = dítě do 26 let, které se soustavně připravuje na povolání (studuje) nebo se nemůže připravovat či pracovat ze zdravotních důvodů. Výpočet počítá s dětmi ve věku 6–15 let (průměrný bracket).">?</span></span>
-          <span class="val" id="lbl-children">0</span>
         </label>
-        <input type="range" id="children" min="0" max="4" step="1" value="0">
+        <div class="toggle-row" id="children-toggle">
+          <button class="active" data-val="0">0</button>
+          <button data-val="1">1</button>
+          <button data-val="2">2</button>
+          <button data-val="3">3</button>
+          <button data-val="4">4</button>
+        </div>
       </div>
     </div>
     <div>
@@ -325,46 +342,67 @@
 
 <!-- Složka bydlení -->
 <div class="card comp housing">
-  <span class="tag">§ 34</span>
+  <a class="tag" href="https://www.zakonyprolidi.cz/cs/2025-151#p34" target="_blank" rel="noopener">§ 34</a>
   <h3>1. Složka na bydlení</h3>
   <div class="f">S<sub>bydlení</sub> = max(0,  R − U)
 
 kde:
   Nájemní bydlení:
     R = min(skutečné nájemné, normativní nájemné) + energetický paušál
-  Vlastní/družstevní bydlení (§ 31):
+  Vlastní/družstevní bydlení (<a class="paragraf" href="https://www.zakonyprolidi.cz/cs/2025-151#p31" target="_blank" rel="noopener">§ 31</a>):
     R = vlastnický paušál + energetický paušál
     vlastnický paušál = 0,30 × normativní nájemné + částka na užívání bytu
 
   U = 0,30 × P                                   … pokud P ≤ 2 × ŽM
   U = 0,30 × P + 0,10 × (P − 2 × ŽM)             … pokud P &gt; 2 × ŽM</div>
   <div class="note">
-    <strong>P</strong> je <em>čistý</em> příjem domácnosti. Normativní nájemné a energetický paušál rostou s počtem osob v domácnosti.
+    <strong>P</strong> je <em>čistý</em> příjem domácnosti. Normativní nájemné, energetický paušál i částka na užívání bytu se mění podle počtu osob v domácnosti — viz oficiální tabulky níže.
   </div>
   <details style="margin-top:.6rem">
-    <summary style="cursor:pointer;font-size:.85rem;font-weight:600">Normativní nájemné 2026 (sdělení č. 526/2025 Sb. MPSV)</summary>
+    <summary style="cursor:pointer;font-size:.85rem;font-weight:600">Normativní nájemné 2026 — standardní (sdělení č. 526/2025 Sb. MPSV)</summary>
     <table style="margin-top:.4rem">
-      <tr><th>1 osoba</th><th>do 69 999 obyv.</th><th>70 000+ obyv.</th><th>Praha / Brno</th></tr>
-      <tr><td>Standardní</td><td>7 580 Kč</td><td>9 430 Kč</td><td>12 831 Kč</td></tr>
-      <tr><td>Zranitelný</td><td>10 310 Kč</td><td>12 310 Kč</td><td>15 910 Kč</td></tr>
+      <tr><th>Počet osob</th><th>do 69 999 obyv.</th><th>70 000+ obyv.</th><th>Praha / Brno</th></tr>
+      <tr><td>1</td><td>7 580 Kč</td><td>9 430 Kč</td><td>12 831 Kč</td></tr>
+      <tr><td>2</td><td>9 245 Kč</td><td>10 950 Kč</td><td>14 466 Kč</td></tr>
+      <tr><td>3</td><td>10 600 Kč</td><td>12 300 Kč</td><td>16 600 Kč</td></tr>
+      <tr><td>4</td><td>11 230 Kč</td><td>12 632 Kč</td><td>17 710 Kč</td></tr>
+      <tr><td>5+</td><td>11 487 Kč</td><td>12 052 Kč</td><td>17 320 Kč</td></tr>
     </table>
-    <table style="margin-top:.3rem">
-      <tr><th>4 osoby</th><th>do 69 999 obyv.</th><th>70 000+ obyv.</th><th>Praha / Brno</th></tr>
-      <tr><td>Standardní</td><td>11 230 Kč</td><td>12 632 Kč</td><td>17 710 Kč</td></tr>
-      <tr><td>Zranitelný</td><td>14 370 Kč</td><td>16 230 Kč</td><td>22 170 Kč</td></tr>
+  </details>
+  <details style="margin-top:.3rem">
+    <summary style="cursor:pointer;font-size:.85rem;font-weight:600">Normativní nájemné 2026 — zranitelné</summary>
+    <table style="margin-top:.4rem">
+      <tr><th>Počet osob</th><th>do 69 999 obyv.</th><th>70 000+ obyv.</th><th>Praha / Brno</th></tr>
+      <tr><td>1</td><td>10 310 Kč</td><td>12 310 Kč</td><td>15 910 Kč</td></tr>
+      <tr><td>2</td><td>12 109 Kč</td><td>13 770 Kč</td><td>18 103 Kč</td></tr>
+      <tr><td>3</td><td>13 758 Kč</td><td>15 394 Kč</td><td>20 230 Kč</td></tr>
+      <tr><td>4</td><td>14 370 Kč</td><td>16 230 Kč</td><td>22 170 Kč</td></tr>
+      <tr><td>5+</td><td>14 880 Kč</td><td>15 780 Kč</td><td>22 380 Kč</td></tr>
     </table>
-    <table style="margin-top:.3rem">
-      <tr><th>Energetický paušál (§ 32)</th><th>Standardní</th><th>Zranitelný (×1,4)</th></tr>
-      <tr><td>1 osoba</td><td>2 300 Kč</td><td>3 220 Kč</td></tr>
-      <tr><td>4 osoby</td><td>3 800 Kč</td><td>5 320 Kč</td></tr>
+  </details>
+  <details style="margin-top:.3rem">
+    <summary style="cursor:pointer;font-size:.85rem;font-weight:600">Energetický paušál (<a class="paragraf" href="https://www.zakonyprolidi.cz/cs/2025-151#p32" target="_blank" rel="noopener">§ 32</a>)</summary>
+    <table style="margin-top:.4rem">
+      <tr><th>Počet osob</th><th>Standardní</th><th>Zranitelný (×1,4)</th></tr>
+      <tr><td>1</td><td>2 300 Kč</td><td>3 220 Kč</td></tr>
+      <tr><td>2</td><td>2 800 Kč</td><td>3 920 Kč</td></tr>
+      <tr><td>3</td><td>3 300 Kč</td><td>4 620 Kč</td></tr>
+      <tr><td>4</td><td>3 800 Kč</td><td>5 320 Kč</td></tr>
+      <tr><td>5+</td><td>4 300 Kč</td><td>6 020 Kč</td></tr>
     </table>
-    <div class="note" style="margin-top:.3rem">Pro 2 a 3 osoby se hodnoty v této kalkulačce lineárně interpolují (orientační).</div>
+  </details>
+  <details style="margin-top:.3rem">
+    <summary style="cursor:pointer;font-size:.85rem;font-weight:600">Částka na užívání bytu (<a class="paragraf" href="https://www.zakonyprolidi.cz/cs/2025-151#p31" target="_blank" rel="noopener">§ 31</a>) — součást vlastnického paušálu</summary>
+    <table style="margin-top:.4rem">
+      <tr><th>Počet osob</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5+</th></tr>
+      <tr><td>Kč / měsíc</td><td>880</td><td>1 240</td><td>1 600</td><td>1 710</td><td>1 820</td></tr>
+    </table>
   </details>
 </div>
 
 <!-- Složka živobytí -->
 <div class="card comp subsist">
-  <span class="tag">§ 35–36</span>
+  <a class="tag" href="https://www.zakonyprolidi.cz/cs/2025-151#p35" target="_blank" rel="noopener">§ 35–36</a>
   <h3>2. Složka na živobytí</h3>
   <div class="f">Podmínka:  P &lt; 1,43 × ŽM
 
@@ -376,7 +414,7 @@ S<sub>živobytí</sub> = max(0,  ŽM − 0,70 × P)</div>
 
 <!-- Dětský bonus -->
 <div class="card comp child">
-  <span class="tag">§ 38–39</span>
+  <a class="tag" href="https://www.zakonyprolidi.cz/cs/2025-151#p38" target="_blank" rel="noopener">§ 38–39</a>
   <h3>3. Dětský bonus</h3>
   <div class="f">Pro každé nezaopatřené dítě podle poměru r = P / ŽM:
 
@@ -393,7 +431,7 @@ B<sub>děti</sub> = částka na dítě × počet dětí</div>
 
 <!-- Pracovní bonus -->
 <div class="card comp work">
-  <span class="tag">§ 40–41</span>
+  <a class="tag" href="https://www.zakonyprolidi.cz/cs/2025-151#p40" target="_blank" rel="noopener">§ 40–41</a>
   <h3>4. Pracovní bonus</h3>
   <div class="f">Podmínka:  alespoň jedna jiná složka &gt; 0 Kč
 
@@ -412,13 +450,13 @@ Fáze vyběhnutí (P &gt; 1,6 × ŽM):
   <h3>Přehled klíčových koeficientů</h3>
   <table>
     <tr><th>Koeficient</th><th>Význam</th><th>§</th></tr>
-    <tr><td>0,30</td><td>Podíl čistého příjmu na bydlení</td><td>§ 34</td></tr>
-    <tr><td>0,10</td><td>Dodatečná redukce nad 2× ŽM</td><td>§ 34</td></tr>
-    <tr><td>1,43</td><td>Hranice živobytí &amp; režimu energií</td><td>§ 35</td></tr>
-    <tr><td>1,6</td><td>Hranice plného pracovního bonusu</td><td>§ 41</td></tr>
-    <tr><td>0,40</td><td>Sazba pracovního bonusu</td><td>§ 41</td></tr>
-    <tr><td>0,30</td><td>Sazba redukce prac. bonusu nad 1,6× ŽM</td><td>§ 41</td></tr>
-    <tr><td>1,4</td><td>Násobitel energií pro zranitelné</td><td>§ 32</td></tr>
+    <tr><td>0,30</td><td>Podíl čistého příjmu na bydlení</td><td><a class="paragraf" href="https://www.zakonyprolidi.cz/cs/2025-151#p34" target="_blank" rel="noopener">§ 34</a></td></tr>
+    <tr><td>0,10</td><td>Dodatečná redukce nad 2× ŽM</td><td><a class="paragraf" href="https://www.zakonyprolidi.cz/cs/2025-151#p34" target="_blank" rel="noopener">§ 34</a></td></tr>
+    <tr><td>1,43</td><td>Hranice živobytí &amp; režimu energií</td><td><a class="paragraf" href="https://www.zakonyprolidi.cz/cs/2025-151#p35" target="_blank" rel="noopener">§ 35</a></td></tr>
+    <tr><td>1,6</td><td>Hranice plného pracovního bonusu</td><td><a class="paragraf" href="https://www.zakonyprolidi.cz/cs/2025-151#p41" target="_blank" rel="noopener">§ 41</a></td></tr>
+    <tr><td>0,40</td><td>Sazba pracovního bonusu</td><td><a class="paragraf" href="https://www.zakonyprolidi.cz/cs/2025-151#p41" target="_blank" rel="noopener">§ 41</a></td></tr>
+    <tr><td>0,30</td><td>Sazba redukce prac. bonusu nad 1,6× ŽM</td><td><a class="paragraf" href="https://www.zakonyprolidi.cz/cs/2025-151#p41" target="_blank" rel="noopener">§ 41</a></td></tr>
+    <tr><td>1,4</td><td>Násobitel energií pro zranitelné</td><td><a class="paragraf" href="https://www.zakonyprolidi.cz/cs/2025-151#p32" target="_blank" rel="noopener">§ 32</a></td></tr>
   </table>
 </div>
 
@@ -439,7 +477,7 @@ Fáze vyběhnutí (P &gt; 1,6 × ŽM):
     <strong>Upozornění:</strong> Tato kalkulačka je <em>orientační</em> a slouží pro ilustraci vzorce výpočtu.
     Pro přesný výpočet použijte <a href="https://mpsv.gov.cz/mpsv-spustilo-orientacni-kalkulacku-pro-vypocet-superdavky" target="_blank">oficiální kalkulačku MPSV</a>
     nebo podejte žádost přes portál <a href="https://jenda.mpsv.cz" target="_blank">Jenda</a>.
-    Zjednodušení: všechen příjem = z práce, energie jako paušál (ne skutečné náklady), normativní nájemné pro 2–3 osoby se lineárně interpoluje.
+    Zjednodušení: všechen příjem = z práce, energie jako paušál (ne skutečné účty), ŽM dětí = střední bracket 6–15 let (3 050 Kč). Normativní nájemné, energetický paušál i částka na užívání bytu podle oficiálních tabulek MPSV pro 1/2/3/4/5+ osob.
   </div>
 </footer>
 
@@ -451,36 +489,44 @@ const ZM_PERSON = {
   before: { single: 4860, firstInMulti: 4470, otherAdult: 4040, child: 3050 },
   after:  { single: 5500, firstInMulti: 5000, otherAdult: 3750, child: 3050 }
 };
+// Sdělení MPSV č. 526/2025 Sb. — explicit per-household-size values (no interpolation).
 const NORM_RENT_BY = {
-  active:     { 1: {small: 7580, medium: 9430, prague: 12831},
-                4: {small: 11230, medium: 12632, prague: 17710} },
-  vulnerable: { 1: {small: 10310, medium: 12310, prague: 15910},
-                4: {small: 14370, medium: 16230, prague: 22170} }
+  active: {
+    1: {small: 7580,  medium: 9430,  prague: 12831},
+    2: {small: 9245,  medium: 10950, prague: 14466},
+    3: {small: 10600, medium: 12300, prague: 16600},
+    4: {small: 11230, medium: 12632, prague: 17710},
+    5: {small: 11487, medium: 12052, prague: 17320}
+  },
+  vulnerable: {
+    1: {small: 10310, medium: 12310, prague: 15910},
+    2: {small: 12109, medium: 13770, prague: 18103},
+    3: {small: 13758, medium: 15394, prague: 20230},
+    4: {small: 14370, medium: 16230, prague: 22170},
+    5: {small: 14880, medium: 15780, prague: 22380}
+  }
 };
 const ENERGY_BY = {
-  active:     { 1: 2300, 4: 3800 },
-  vulnerable: { 1: 3220, 4: 5320 }
+  active:     { 1: 2300, 2: 2800, 3: 3300, 4: 3800, 5: 4300 },
+  vulnerable: { 1: 3220, 2: 3920, 3: 4620, 4: 5320, 5: 6020 }
 };
-const USAGE_FEE_BY = { 1: 880, 4: 1200 };
+const USAGE_FEE_BY = { 1: 880, 2: 1240, 3: 1600, 4: 1710, 5: 1820 };
 
-// ═══ Parametric lookups (linear interpolation 1↔4 persons) ═══
-function interp(v1, v4, n) {
-  const clamped = Math.max(1, Math.min(4, n));
-  return v1 + (v4 - v1) * ((clamped - 1) / 3);
-}
+// ═══ Lookups by household size (clamped 1..5+) ═══
+function clampPersons(n) { return Math.max(1, Math.min(5, n)); }
 function zmTotal(adults, children, per) {
   const z = ZM_PERSON[per];
   if (adults === 1 && children === 0) return z.single;
   return z.firstInMulti + (adults - 1) * z.otherAdult + children * z.child;
 }
 function normRentFor(persons, stat, muni) {
-  return interp(NORM_RENT_BY[stat][1][muni], NORM_RENT_BY[stat][4][muni], persons);
+  return NORM_RENT_BY[stat][clampPersons(persons)][muni];
 }
 function energyFor(persons, stat) {
-  return interp(ENERGY_BY[stat][1], ENERGY_BY[stat][4], persons);
+  return ENERGY_BY[stat][clampPersons(persons)];
 }
 function usageFeeFor(persons) {
-  return interp(USAGE_FEE_BY[1], USAGE_FEE_BY[4], persons);
+  return USAGE_FEE_BY[clampPersons(persons)];
 }
 
 // ═══ Unified calculation (single or family) ═══
@@ -541,13 +587,9 @@ function calcDSSP(income, rent, muni, stat, per, hType, adults, children) {
 const $income = document.getElementById('income');
 const $rent = document.getElementById('rent');
 const $muni = document.getElementById('municipality');
-const $adults = document.getElementById('adults');
-const $children = document.getElementById('children');
 const $lblIncome = document.getElementById('lbl-income');
 const $lblRent = document.getElementById('lbl-rent');
 const $lblOwner = document.getElementById('lbl-owner-paushal');
-const $lblAdults = document.getElementById('lbl-adults');
-const $lblChildren = document.getElementById('lbl-children');
 const $rentGroup = document.getElementById('rent-group');
 const $ownerInfo = document.getElementById('owner-info');
 const canvas = document.getElementById('chart');
@@ -558,25 +600,29 @@ const ctx2 = canvas2.getContext('2d');
 let status = 'active';
 let period = 'before';
 let housingType = 'rental';
+let adults = 1;
+let children = 0;
 
-// Toggle buttons
+// Segmented button rows
 document.querySelectorAll('.toggle-row').forEach(row => {
   row.querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', () => {
       row.querySelectorAll('button').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       if (row.id === 'status-toggle') status = btn.dataset.val;
-      if (row.id === 'period-toggle') period = btn.dataset.val;
-      if (row.id === 'housing-type-toggle') {
+      else if (row.id === 'period-toggle') period = btn.dataset.val;
+      else if (row.id === 'housing-type-toggle') {
         housingType = btn.dataset.val;
         $rentGroup.style.display = housingType === 'rental' ? '' : 'none';
         $ownerInfo.style.display = housingType === 'owner' ? '' : 'none';
       }
+      else if (row.id === 'adults-toggle') adults = +btn.dataset.val;
+      else if (row.id === 'children-toggle') children = +btn.dataset.val;
       update();
     });
   });
 });
-[$income, $rent, $muni, $adults, $children].forEach(el => el.addEventListener('input', update));
+[$income, $rent, $muni].forEach(el => el.addEventListener('input', update));
 
 // Help tooltips (hover on desktop, tap on mobile)
 document.querySelectorAll('.help').forEach(el => {
@@ -603,12 +649,8 @@ function update() {
   const income = +$income.value;
   const rent = +$rent.value;
   const muni = $muni.value;
-  const adults = +$adults.value;
-  const children = +$children.value;
   $lblIncome.textContent = fmt(income);
   $lblRent.textContent = fmt(rent);
-  $lblAdults.textContent = adults;
-  $lblChildren.textContent = children;
 
   const r = calcDSSP(income, rent, muni, status, period, housingType, adults, children);
 
