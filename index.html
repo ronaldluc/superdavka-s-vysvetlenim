@@ -102,6 +102,16 @@
     font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s}
   .toggle-row button.active{background:var(--c-accent);color:#fff;border-color:var(--c-accent)}
 
+  /* Children-by-age rows */
+  .child-rows{display:flex;flex-direction:column;gap:.45rem}
+  .child-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);
+    gap:.5rem;align-items:center}
+  .child-row .child-age{font-size:.75rem;color:var(--c-text);line-height:1.3}
+  .child-row .child-age em{color:var(--c-muted);font-style:normal;font-size:.9em}
+  @media(max-width:480px){
+    .child-row{grid-template-columns:1fr;gap:.15rem}
+  }
+
   /* Results */
   .result-total{display:grid;grid-template-columns:1fr 1px 1fr;gap:1.2rem;
     align-items:center;text-align:center;padding:1.2rem 1.4rem;
@@ -223,14 +233,39 @@
       </div>
       <div class="input-group">
         <label>
-          <span>Počet nezaopatřených dětí <span class="help" data-tip="Nezaopatřené dítě = dítě do 26 let, které se soustavně připravuje na povolání (studuje) nebo se nemůže připravovat či pracovat ze zdravotních důvodů. Výpočet počítá s dětmi ve věku 6–15 let (průměrný bracket).">?</span></span>
+          <span>Nezaopatřené děti <span class="help" data-tip="Nezaopatřené dítě = dítě do 26 let, které se soustavně připravuje na povolání (studuje) nebo se nemůže připravovat či pracovat ze zdravotních důvodů. Rozdělte podle věku — ovlivňuje životní minimum domácnosti a tím i všechny složky dávky. Výše samotného bonusu na dítě (500 / 1 000 Kč) je na věku nezávislá.">?</span></span>
         </label>
-        <div class="toggle-row" id="children-toggle">
-          <button class="active" data-val="0">0</button>
-          <button data-val="1">1</button>
-          <button data-val="2">2</button>
-          <button data-val="3">3</button>
-          <button data-val="4">4</button>
+        <div class="child-rows">
+          <div class="child-row">
+            <span class="child-age">Do 6 let <em>(ŽM 2 480 Kč)</em></span>
+            <div class="toggle-row" id="children-u6-toggle">
+              <button class="active" data-val="0">0</button>
+              <button data-val="1">1</button>
+              <button data-val="2">2</button>
+              <button data-val="3">3</button>
+              <button data-val="4">4</button>
+            </div>
+          </div>
+          <div class="child-row">
+            <span class="child-age">6–15 let <em>(ŽM 3 050 Kč)</em></span>
+            <div class="toggle-row" id="children-6-15-toggle">
+              <button class="active" data-val="0">0</button>
+              <button data-val="1">1</button>
+              <button data-val="2">2</button>
+              <button data-val="3">3</button>
+              <button data-val="4">4</button>
+            </div>
+          </div>
+          <div class="child-row">
+            <span class="child-age">15–26 studující <em>(ŽM 3 490 Kč)</em></span>
+            <div class="toggle-row" id="children-15-26-toggle">
+              <button class="active" data-val="0">0</button>
+              <button data-val="1">1</button>
+              <button data-val="2">2</button>
+              <button data-val="3">3</button>
+              <button data-val="4">4</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -430,6 +465,7 @@ S<sub>živobytí</sub> = max(0,  ŽM − 0,70 × P)</div>
 B<sub>děti</sub> = částka na dítě × počet dětí</div>
   <div class="note">
     Klesající část (3 &lt; r &lt; 4) zajišťuje plynulý přechod na nulu — žádný skokový propad.
+    <strong>Věk dětí</strong> ovlivňuje ŽM domácnosti (do 6 let: 2 480 Kč · 6–15: 3 050 Kč · 15–26 studující: 3 490 Kč, <a class="paragraf" href="https://www.zakonyprolidi.cz/cs/2006-110" target="_blank" rel="noopener">zák. 110/2006 Sb.</a>) — a tím i poměr r. Samotná výše bonusu na věku nezávisí.
   </div>
 </div>
 
@@ -490,8 +526,10 @@ Fáze vyběhnutí (P &gt; 1,6 × ŽM):
 <script>
 // ═══ Constants ═══
 const ZM_PERSON = {
-  before: { single: 4860, firstInMulti: 4470, otherAdult: 4040, child: 3050 },
-  after:  { single: 5500, firstInMulti: 5000, otherAdult: 3750, child: 3050 }
+  before: { single: 4860, firstInMulti: 4470, otherAdult: 4040,
+            childU6: 2480, child6_15: 3050, child15_26: 3490 },
+  after:  { single: 5500, firstInMulti: 5000, otherAdult: 3750,
+            childU6: 2480, child6_15: 3050, child15_26: 3490 }
 };
 // Sdělení MPSV č. 526/2025 Sb. — explicit per-household-size values (no interpolation).
 const NORM_RENT_BY = {
@@ -518,10 +556,15 @@ const USAGE_FEE_BY = { 1: 880, 2: 1240, 3: 1600, 4: 1710, 5: 1820 };
 
 // ═══ Lookups by household size (clamped 1..5+) ═══
 function clampPersons(n) { return Math.max(1, Math.min(5, n)); }
-function zmTotal(adults, children, per) {
+function totalKids(kids) { return kids.u6 + kids.p6_15 + kids.p15_26; }
+function zmTotal(adults, kids, per) {
   const z = ZM_PERSON[per];
-  if (adults === 1 && children === 0) return z.single;
-  return z.firstInMulti + (adults - 1) * z.otherAdult + children * z.child;
+  const tc = totalKids(kids);
+  if (adults === 1 && tc === 0) return z.single;
+  return z.firstInMulti + (adults - 1) * z.otherAdult
+       + kids.u6 * z.childU6
+       + kids.p6_15 * z.child6_15
+       + kids.p15_26 * z.child15_26;
 }
 function normRentFor(persons, stat, muni) {
   return NORM_RENT_BY[stat][clampPersons(persons)][muni];
@@ -534,9 +577,10 @@ function usageFeeFor(persons) {
 }
 
 // ═══ Unified calculation (single or family) ═══
-function calcDSSP(income, rent, muni, stat, per, hType, adults, children) {
-  const zm = zmTotal(adults, children, per);
-  const persons = adults + children;
+function calcDSSP(income, rent, muni, stat, per, hType, adults, kids) {
+  const zm = zmTotal(adults, kids, per);
+  const tc = totalKids(kids);
+  const persons = adults + tc;
   const normRent = normRentFor(persons, stat, muni);
   const energy = energyFor(persons, stat);
 
@@ -558,9 +602,9 @@ function calcDSSP(income, rent, muni, stat, per, hType, adults, children) {
     subsistence = Math.max(0, zm - 0.70 * income);
   }
 
-  // 3. Child bonus (§ 38-39)
+  // 3. Child bonus (§ 38-39) — amount is age-independent
   let childBonus = 0;
-  if (children > 0) {
+  if (tc > 0) {
     const ratio = income / zm;
     let perChild = 0;
     if (ratio < 4) {
@@ -568,7 +612,7 @@ function calcDSSP(income, rent, muni, stat, per, hType, adults, children) {
       else if (ratio <= 3) perChild = 1000;
       else perChild = Math.max(0, 1000 * (4 - ratio));
     }
-    childBonus = perChild * children;
+    childBonus = perChild * tc;
   }
 
   // 4. Work bonus (§ 40-41)
@@ -583,7 +627,8 @@ function calcDSSP(income, rent, muni, stat, per, hType, adults, children) {
   return {
     housing, subsistence, childBonus, workBonus,
     total: housing + subsistence + childBonus + workBonus,
-    zm, normRent, energy, recognizedCosts, ownerPaushal, persons
+    zm, normRent, energy, recognizedCosts, ownerPaushal, persons,
+    totalChildren: tc
   };
 }
 
@@ -605,7 +650,7 @@ let status = 'active';
 let period = 'before';
 let housingType = 'rental';
 let adults = 1;
-let children = 0;
+let kids = { u6: 0, p6_15: 0, p15_26: 0 };
 
 // Segmented button rows
 document.querySelectorAll('.toggle-row').forEach(row => {
@@ -621,7 +666,9 @@ document.querySelectorAll('.toggle-row').forEach(row => {
         $ownerInfo.style.display = housingType === 'owner' ? '' : 'none';
       }
       else if (row.id === 'adults-toggle') adults = +btn.dataset.val;
-      else if (row.id === 'children-toggle') children = +btn.dataset.val;
+      else if (row.id === 'children-u6-toggle') kids.u6 = +btn.dataset.val;
+      else if (row.id === 'children-6-15-toggle') kids.p6_15 = +btn.dataset.val;
+      else if (row.id === 'children-15-26-toggle') kids.p15_26 = +btn.dataset.val;
       update();
     });
   });
@@ -656,7 +703,8 @@ function update() {
   $lblIncome.textContent = fmt(income);
   $lblRent.textContent = fmt(rent);
 
-  const r = calcDSSP(income, rent, muni, status, period, housingType, adults, children);
+  const r = calcDSSP(income, rent, muni, status, period, housingType, adults, kids);
+  const tc = r.totalChildren;
 
   if (housingType === 'owner') $lblOwner.textContent = fmt(r.ownerPaushal);
 
@@ -665,16 +713,16 @@ function update() {
   document.getElementById('res-subsist').textContent = fmt(r.subsistence);
   document.getElementById('res-work').textContent = fmt(r.workBonus);
 
-  // Child bonus — show only when children > 0
+  // Child bonus — show only when any children > 0
   const $bkChild = document.getElementById('bk-child');
-  if (children > 0) {
+  if (tc > 0) {
     $bkChild.style.display = '';
     document.getElementById('res-child').textContent = fmt(r.childBonus);
     const ratio = income / r.zm;
     let childNote;
-    if (ratio <= 1.43) childNote = `500 × ${children} dětí`;
-    else if (ratio <= 3) childNote = `1 000 × ${children} dětí`;
-    else if (ratio < 4) childNote = `${Math.round(1000 * (4 - ratio))} × ${children} (klesá)`;
+    if (ratio <= 1.43) childNote = `500 × ${tc} dětí`;
+    else if (ratio <= 3) childNote = `1 000 × ${tc} dětí`;
+    else if (ratio < 4) childNote = `${Math.round(1000 * (4 - ratio))} × ${tc} (klesá)`;
     else childNote = 'P ≥ 4× ŽM — nenáleží';
     document.getElementById('note-child').textContent = childNote;
   } else {
@@ -712,7 +760,7 @@ function update() {
 
   // Take-home per extra 100 Kč earned
   const step = 100;
-  const rNext = calcDSSP(income + step, rent, muni, status, period, housingType, adults, children);
+  const rNext = calcDSSP(income + step, rent, muni, status, period, housingType, adults, kids);
   const benefitDelta = rNext.total - r.total;
   const takeHome = step + benefitDelta;
   const thEl = document.getElementById('result-total');
@@ -729,18 +777,18 @@ function update() {
   else if (benefitDelta < 0) thSubEl.textContent = `dávka se sníží o ${absDelta} Kč`;
   else thSubEl.textContent = `dávka přidá dalších ${absDelta} Kč`;
 
-  drawChart(income, rent, muni, adults, children);
-  drawChart2(income, rent, muni, adults, children);
+  drawChart(income, rent, muni, adults, kids);
+  drawChart2(income, rent, muni, adults, kids);
 }
 
 // Helper: adaptive max income for charts (scales with household size)
-function chartMaxIncome(adults, children) {
-  const zm = zmTotal(adults, children, period);
+function chartMaxIncome(adults, kids) {
+  const zm = zmTotal(adults, kids, period);
   return Math.max(45000, Math.ceil(zm * 4.5 / 5000) * 5000);
 }
 
 // ═══ Chart 1: Composition ═══
-function drawChart(currentIncome, rent, muni, adults, children) {
+function drawChart(currentIncome, rent, muni, adults, kids) {
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
   canvas.width = rect.width * dpr;
@@ -751,13 +799,14 @@ function drawChart(currentIncome, rent, muni, adults, children) {
   const cw = W - pad.l - pad.r, ch = H - pad.t - pad.b;
   ctx.clearRect(0, 0, W, H);
 
-  const maxIncome = chartMaxIncome(adults, children);
+  const maxIncome = chartMaxIncome(adults, kids);
   const steps = 200;
   const series = { housing: [], subsist: [], child: [], work: [], total: [] };
   let maxY = 0;
+  const tc = totalKids(kids);
   for (let i = 0; i <= steps; i++) {
     const inc = (i / steps) * maxIncome;
-    const rr = calcDSSP(inc, rent, muni, status, period, housingType, adults, children);
+    const rr = calcDSSP(inc, rent, muni, status, period, housingType, adults, kids);
     series.housing.push(rr.housing);
     series.subsist.push(rr.subsistence);
     series.child.push(rr.childBonus);
@@ -793,7 +842,7 @@ function drawChart(currentIncome, rent, muni, adults, children) {
   ctx.fillText('Dávka (Kč)', 0, 0); ctx.restore();
 
   // Thresholds — staggered in 2 rows to prevent overlap
-  const zm = zmTotal(adults, children, period);
+  const zm = zmTotal(adults, kids, period);
   const thresholds = [
     { v: 1.43 * zm, lbl: '1,43×ŽM' },
     { v: 1.6 * zm,  lbl: '1,6×ŽM' },
@@ -836,7 +885,7 @@ function drawChart(currentIncome, rent, muni, adults, children) {
   }
   drawLine(series.housing, cs.getPropertyValue('--c-housing').trim(), 2);
   drawLine(series.subsist, cs.getPropertyValue('--c-subsist').trim(), 2);
-  if (children > 0) drawLine(series.child, cs.getPropertyValue('--c-child').trim(), 2);
+  if (tc > 0) drawLine(series.child, cs.getPropertyValue('--c-child').trim(), 2);
   drawLine(series.work, cs.getPropertyValue('--c-work').trim(), 2);
   drawLine(series.total, cs.getPropertyValue('--c-total').trim(), 2.5);
 
@@ -846,7 +895,7 @@ function drawChart(currentIncome, rent, muni, adults, children) {
   ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.moveTo(x(currentIncome), pad.t); ctx.lineTo(x(currentIncome), pad.t + ch); ctx.stroke();
   ctx.setLineDash([]);
-  const curR = calcDSSP(currentIncome, rent, muni, status, period, housingType, adults, children);
+  const curR = calcDSSP(currentIncome, rent, muni, status, period, housingType, adults, kids);
   ctx.beginPath();
   ctx.arc(x(currentIncome), y(curR.total), 5, 0, Math.PI * 2);
   ctx.fillStyle = cs.getPropertyValue('--c-accent').trim(); ctx.fill();
@@ -858,7 +907,7 @@ function drawChart(currentIncome, rent, muni, adults, children) {
     { lbl: 'Bydlení', c: cs.getPropertyValue('--c-housing').trim() },
     { lbl: 'Živobytí', c: cs.getPropertyValue('--c-subsist').trim() },
   ];
-  if (children > 0) legends.push({ lbl: 'Děti', c: cs.getPropertyValue('--c-child').trim() });
+  if (tc > 0) legends.push({ lbl: 'Děti', c: cs.getPropertyValue('--c-child').trim() });
   legends.push({ lbl: 'Prac. bonus', c: cs.getPropertyValue('--c-work').trim() });
   let lx = pad.l + 8;
   legends.forEach(l => {
@@ -870,7 +919,7 @@ function drawChart(currentIncome, rent, muni, adults, children) {
 }
 
 // ═══ Chart 2: Disposable income ═══
-function drawChart2(currentIncome, rent, muni, adults, children) {
+function drawChart2(currentIncome, rent, muni, adults, kids) {
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas2.getBoundingClientRect();
   canvas2.width = rect.width * dpr;
@@ -881,13 +930,13 @@ function drawChart2(currentIncome, rent, muni, adults, children) {
   const cw = W - pad.l - pad.r, ch = H - pad.t - pad.b;
   ctx2.clearRect(0, 0, W, H);
 
-  const maxIncome = chartMaxIncome(adults, children);
+  const maxIncome = chartMaxIncome(adults, kids);
   const steps = 200;
   const disposable = [];
   let maxY = 0;
   for (let i = 0; i <= steps; i++) {
     const inc = (i / steps) * maxIncome;
-    const rr = calcDSSP(inc, rent, muni, status, period, housingType, adults, children);
+    const rr = calcDSSP(inc, rent, muni, status, period, housingType, adults, kids);
     const d = inc + rr.total;
     disposable.push(d);
     if (d > maxY) maxY = d;
@@ -960,7 +1009,7 @@ function drawChart2(currentIncome, rent, muni, adults, children) {
   ctx2.beginPath();
   ctx2.moveTo(x(currentIncome), pad.t); ctx2.lineTo(x(currentIncome), pad.t + ch); ctx2.stroke();
   ctx2.setLineDash([]);
-  const curR = calcDSSP(currentIncome, rent, muni, status, period, housingType, adults, children);
+  const curR = calcDSSP(currentIncome, rent, muni, status, period, housingType, adults, kids);
   const curDisp = currentIncome + curR.total;
   ctx2.beginPath();
   ctx2.arc(x(currentIncome), y(curDisp), 5, 0, Math.PI * 2);
