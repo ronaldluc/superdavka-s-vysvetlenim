@@ -116,16 +116,40 @@
     .child-row{grid-template-columns:1fr;gap:.15rem}
   }
 
-  .result-total{display:grid;grid-template-columns:1fr 1px 1fr;gap:1.2rem;
+  .result-total{display:grid;grid-template-columns:1.05fr 1px 1.05fr 1px 1fr;gap:1.05rem;
     align-items:center;text-align:center;padding:1.2rem 1.4rem;
     background:linear-gradient(135deg,#1e293b,#334155);
     color:#fff;border-radius:var(--radius);margin:.8rem 0}
   .result-cell{min-width:0}
   .result-divider{align-self:stretch;background:rgba(255,255,255,.15)}
+  .result-divider.old-divider{background:rgba(255,255,255,.08);
+    background-image:repeating-linear-gradient(to bottom,
+      rgba(255,255,255,.18) 0,rgba(255,255,255,.18) 4px,
+      transparent 4px,transparent 8px)}
+  @media(max-width:900px){
+    .result-total{grid-template-columns:1fr 1fr;gap:.9rem}
+    .result-divider{display:none}
+    .old-cell{grid-column:1 / -1;border-top:1px dashed rgba(255,255,255,.18);
+      padding-top:.8rem;margin-top:.2rem}
+  }
   @media(max-width:640px){
     .result-total{grid-template-columns:1fr;gap:.9rem;padding:1.2rem}
-    .result-divider{height:1px;width:100%}
+    .result-divider{height:1px;width:100%;display:none}
+    .old-cell{border-top:1px dashed rgba(255,255,255,.18);padding-top:.8rem}
   }
+  /* Sekce „starý systém" — vizuálně ztlumená, šedivější, menší písmo. */
+  .old-cell .old-lbl{opacity:.62;font-size:.7rem}
+  .old-cell .old-lbl .help{background:rgba(255,255,255,.18);color:rgba(255,255,255,.7)}
+  .old-cell .old-amt{font-size:1.15rem;font-weight:700;font-variant-numeric:tabular-nums;
+    line-height:1.15;margin-top:.25rem;
+    color:#cbd5e1;font-style:italic;letter-spacing:-.01em}
+  .old-cell .old-breakdown{font-size:.7rem;line-height:1.45;margin-top:.4rem;
+    color:rgba(226,232,240,.65);text-align:left;display:inline-block;
+    font-variant-numeric:tabular-nums}
+  .old-cell .old-breakdown .row{display:flex;justify-content:space-between;gap:1rem;
+    white-space:nowrap}
+  .old-cell .old-breakdown .row.zero{opacity:.45}
+  .old-cell .old-breakdown .row .v{font-weight:600;color:rgba(226,232,240,.85)}
   .result-total .lbl{font-size:.78rem;opacity:.8;text-transform:uppercase;
     letter-spacing:.05em;line-height:1.3;display:flex;align-items:center;
     justify-content:center;gap:.3rem;flex-wrap:wrap}
@@ -231,10 +255,18 @@
     <div>
       <div class="input-group">
         <label>
-          <span>Čistý měsíční příjem domácnosti (z práce) <span class="help" data-tip="Čistý příjem ze zaměstnání / OSVČ všech členů dohromady. Oficiální kalkulačka MPSV pracuje se součtem čistých příjmů ze zaměstnání a SVČ.">?</span></span>
+          <span>Čistý měsíční příjem z práce <span class="help" data-tip="Součet čistých příjmů ze zaměstnání a ze samostatné výdělečné činnosti (OSVČ) všech členů domácnosti. Tento příjem zakládá nárok na pracovní bonus (§ 40–41).">?</span></span>
           <span class="val" id="lbl-income">15 000 Kč</span>
         </label>
         <input type="range" id="income" min="0" max="80000" step="100" value="15000">
+      </div>
+      <div class="input-group">
+        <label>
+          <span>Ostatní měsíční příjmy <span class="help" data-tip="Započítává se do celkového rozhodného příjmu P (pro bydlení, živobytí, bonus na dítě), ale NE do pracovního bonusu. Patří sem: starobní/invalidní/vdovský důchod, rodičovský příspěvek, peněžitá pomoc v mateřství (PPM), nemocenská, podpora v nezaměstnanosti, výživné (alimenty), příjmy z pronájmu, dávky pěstounské péče, stipendia nad limit, příjmy ze zahraničí (§ 12 odst. 1). Nepatří sem: přídavek na dítě, příspěvek na péči, odškodnění, jednorázové sociální dávky, superdávka sama.">?</span></span>
+          <span class="val" id="lbl-income-other">0 Kč</span>
+        </label>
+        <input type="range" id="income-other" min="0" max="40000" step="100" value="0">
+        <div class="hint">Důchody, alimenty, rodičovský, nemocenská, pronájem, PPM...</div>
       </div>
       <div class="input-group" id="rent-group">
         <label>
@@ -346,17 +378,67 @@
           <button data-val="after">od 1. 10. 2026</button>
         </div>
       </div>
-      <div class="input-group">
-        <label>
-          <span>Bonus na dítě <span class="help" data-tip="MPSV oficiální kalkulačka vyplácí bonus jen když má dítě flag 'zranitelna: ano'. Dle § 7 zákona JSOU děti < 18 let VŽDY zranitelné, takže v praxi bonus pobývá. Přepínač je zde jen pro pokročilé srovnání s vlastním testováním MPSV API.">?</span></span>
-        </label>
-        <div class="toggle-row" id="children-vuln-toggle">
-          <button class="active" data-val="yes">Vyplácet (děti jsou zranitelné dle § 7)</button>
-          <button data-val="no">Nevyplácet (MPSV test mode)</button>
-        </div>
-      </div>
     </div>
   </div>
+
+  <!-- Pokročilé parametry -->
+  <details id="advanced" style="margin-top:1rem;border-top:1px dashed var(--c-border);padding-top:.8rem">
+    <summary style="cursor:pointer;font-size:1rem;font-weight:700;color:var(--c-text);padding:.25rem 0">
+      Pokročilé parametry
+      <span class="note" style="display:inline;font-weight:400">— OSVČ, školní docházka, majetkový test</span>
+    </summary>
+
+    <div style="margin-top:.8rem">
+
+      <!-- OSVČ per dospělý -->
+      <div class="input-group">
+        <label>
+          <span>Samostatná výdělečná činnost (OSVČ) <span class="help" data-tip="Pro výpočet rozhodného příjmu DSSP se z SVČ bere 50 % daňového základu dělených 12 (§ 12 odst. 3). Zákon neukládá imputaci na minimální vyměřovací základ — ten je relevantní jen pro odvody ČSSZ/ZP. U OSVČ hlavní činnosti ale pozor: pokud domácnost deklaruje velmi nízký SVČ příjem, úřad práce si může vyžádat daňové přiznání.">?</span></span>
+        </label>
+        <div id="osvc-rows" style="display:flex;flex-direction:column;gap:.45rem;margin-top:.3rem"></div>
+      </div>
+
+      <!-- Školní docházka -->
+      <div class="input-group" id="school-group" style="display:none">
+        <label>
+          <span>Povinná školní docházka (6–15 let) <span class="help" data-tip="§ 38: bonus na dítě ve věku 6–15 let se přiznává jen pokud dítě plní povinnou školní docházku. Pokud všechny děti v této věkové skupině dochází do školy, nechte zaškrtnuto.">?</span></span>
+        </label>
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-weight:400;font-size:.88rem;margin-top:.2rem">
+          <input type="checkbox" id="school-attendance" checked>
+          <span>Všechny děti 6–15 let plní povinnou školní docházku</span>
+        </label>
+      </div>
+
+      <!-- Majetkový test § 17 -->
+      <div class="input-group">
+        <label>
+          <span>Majetkový test (§ 17) <span class="help" data-tip="Hard gate — pokud kterékoliv tvrzení neplatí, nárok na DSSP nevzniká vůbec (0 Kč). Výchozí stav: vše zaškrtnuto (domácnost podmínky splňuje). Odškrtněte tvrzení, která neplatí.">?</span></span>
+        </label>
+        <div id="assets-checks" style="display:flex;flex-direction:column;gap:.35rem;margin-top:.3rem;font-size:.88rem">
+          <label style="display:flex;align-items:flex-start;gap:.5rem;cursor:pointer;font-weight:400;line-height:1.35">
+            <input type="checkbox" class="asset-check" data-key="liquid" checked style="margin-top:.2rem">
+            <span>Úspory a likvidní finanční aktiva (akcie, kryptoměny) jsou v domácnosti do limitu <span class="help" data-tip="Limit dle § 17 a vyhlášky: 100 000 Kč / 1 osoba, +50 000 Kč za každou další osobu (orientačně). Nepočítá se stavební spoření, penzijní připojištění, životní pojištění, DIP.">?</span></span>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:.5rem;cursor:pointer;font-weight:400;line-height:1.35">
+            <input type="checkbox" class="asset-check" data-key="secondProperty" checked style="margin-top:.2rem">
+            <span>Domácnost nevlastní druhou obytnou / rekreační nemovitost (mimo trvalého bydliště)</span>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:.5rem;cursor:pointer;font-weight:400;line-height:1.35">
+            <input type="checkbox" class="asset-check" data-key="vehicles" checked style="margin-top:.2rem">
+            <span>Nejvýše jedno vozidlo na domácnost (mimo výjimek pro osobu se zdravotním postižením / pro výkon práce)</span>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:.5rem;cursor:pointer;font-weight:400;line-height:1.35">
+            <input type="checkbox" class="asset-check" data-key="luxury" checked style="margin-top:.2rem">
+            <span>Domácnost nevlastní luxusní movité věci (plavidlo, letadlo, umělecké sbírky ap.) nad zákonný limit</span>
+          </label>
+        </div>
+        <div class="hint" id="assets-hint" style="display:none;color:var(--c-err);font-style:normal;font-weight:500;margin-top:.3rem">
+          Některé tvrzení neplatí — nárok na DSSP nevzniká (0 Kč).
+        </div>
+      </div>
+
+    </div>
+  </details>
 </div>
 
 <!-- Výsledky -->
@@ -371,6 +453,12 @@
     <div class="lbl">Za extra vydělaných 100 Kč na účet <span class="nowrap">dostanu <span class="help" data-tip="O kolik Kč se změní disponibilní příjem (příjem + dávka) při +100 Kč čistého příjmu. Nízké číslo = velká efektivní mezní sazba.">?</span></span></div>
     <div class="amt" id="th-val">+100 Kč</div>
     <div class="pct" id="th-sub">dávka se nemění</div>
+  </div>
+  <div class="result-divider old-divider"></div>
+  <div class="result-cell old-cell">
+    <div class="lbl old-lbl">Předchozí systém (do 9/2025) <span class="help" data-tip="Orientační odhad — co by tato domácnost dostala v součtu ze starých čtyř dávek (Příspěvek na bydlení, Příspěvek na živobytí, Doplatek na bydlení, Přídavek na dítě), kdyby ještě platily. Používá ŽM 2025 a 2026 normativy bydlení jako proxy 2025; přesnost ±10 %.">?</span></div>
+    <div class="amt old-amt" id="res-old-total">~0 Kč</div>
+    <div class="old-breakdown" id="old-breakdown"></div>
   </div>
 </div>
 
@@ -412,7 +500,7 @@
   <canvas id="chart"></canvas>
 </div>
 <div class="note" style="text-align:center;margin-top:.3rem">
-  Svislá čárkovaná čára = aktuálně zvolený čistý příjem. Ostatní parametry dle nastavení výše.
+  Svislá čárkovaná čára = aktuálně zvolený čistý příjem. Šedá čárkovaná = celkový součet ze starého systému 4 dávek (do 9/2025), orientačně.
 </div>
 
 <!-- Graf 2 -->
@@ -421,7 +509,7 @@
   <canvas id="chart2"></canvas>
 </div>
 <div class="note" style="text-align:center;margin-top:.3rem">
-  Šedá 45° čárkovaná čára = čistý příjem bez dávky. Zelená plocha = přínos superdávky.
+  Šedá 45° čárkovaná čára = čistý příjem bez dávky. Zelená plocha = přínos superdávky. Šedá tečkovaná = příjem + starý systém 4 dávek (do 9/2025), orientačně.
 </div>
 
 <!-- ══════════════════════ VYSVĚTLENÍ SE VZORCI ══════════════════════ -->
@@ -586,7 +674,7 @@ Fáze vyběhnutí (P &gt; 1,6 × ŽM):
   <div class="disclaimer">
     <strong>Ověření:</strong> Engine byl validován proti 4 768 637 ground-truth výpočtům oficiální kalkulačky MPSV (síťkování přes 1–3 dospělých × 0–4 děti × 35 kombinací věků × 3 kategorie obcí × 3 typy bydlení × nájem 0–30 000 Kč × energie 0–10 000 Kč × příjem 0–150 000 Kč po 100 Kč). Shoda: <strong>4 768 637 / 4 768 637 (100 %)</strong> na rozdíl každé složky i celku.
     <br><br>
-    <strong>Limity:</strong> Tato kalkulačka nepočítá majetkový test (§ 17) — zkontrolujte samostatně, že máte úspory pod limitem. Dále nezohledňuje OSVČ minima (§ 6, § 12), § 37 zvýšení životních potřeb (individuální plán, veřejná služba, dieta) a jednotlivé typy zranitelnosti (jen agregovaný toggle „všichni zranitelní"). Pro plnou přesnost podejte žádost přes <a href="https://jenda.mpsv.cz" target="_blank">Jenda</a>.
+    <strong>Limity:</strong> Tato kalkulačka nezohledňuje § 37 zvýšení životních potřeb (individuální plán, veřejná služba, dieta), jednotlivé typy zranitelnosti (jen agregovaný toggle „všichni zranitelní") a pro OSVČ hlavní činnost aplikuje jen podlaží 0,80 × průměrné mzdy (detailní varianty paušální daně a „první rok" nejsou implementovány). Majetkový test (§ 17) je zjednodušený na 4 tvrzení — ve skutečnosti úřad práce posuzuje i další movité věci, cenné papíry, kryptoměny apod. Pro plnou přesnost podejte žádost přes <a href="https://jenda.mpsv.cz" target="_blank">Jenda</a>.
   </div>
 </footer>
 
@@ -661,6 +749,12 @@ const CONST = {
     childLow: 500,                // § 39(1)
     childLowVulnerable: 1000,     // § 39(2) — když VŠICHNI zranitelní
     childMid: 1000                // § 39
+  },
+  // OSVČ pro DSSP (Zákon 151/2025 Sb., § 5–6 + Sdělení ČSÚ 2026)
+  // Průměrná mzda 2026: 48 967 Kč/měsíc
+  OSVC: {
+    mainMin: 39173,               // 0,80 × PM — minimum pro OSVČ hlavní činnost
+    sideFirstYear: 4897           // 0,10 × PM (informativně; nevynucujeme)
   }
 };
 
@@ -696,7 +790,8 @@ function zmHousehold(adults, kids, period) {
 }
 
 function energyRecognized(energyActual, pausal, income, zm) {
-  if (income < CONST.COEFF.subsistThreshold * zm) {
+  // § 23 — boundary is inclusive (MPSV stays on adresná at P == 1,43 × ŽM).
+  if (income <= CONST.COEFF.subsistThreshold * zm) {
     // adresná — skutečné, max 1,2 × paušál (§ 23 odst. 1b / 3b)
     return Math.min(energyActual, Math.round(CONST.COEFF.actualEnergyCap * pausal));
   }
@@ -705,8 +800,25 @@ function energyRecognized(energyActual, pausal, income, zm) {
 
 // ── hlavní výpočet ──
 function compute(inputs) {
-  const { income, rentActual, energyActual,
-          adults, kids, housingType, status, period, bydliste, childrenVulnerable } = inputs;
+  const { rentActual, energyActual,
+          adults, kids, housingType, status, period, bydliste, childrenVulnerable,
+          osvc = [], schoolAttendance = true, assets = null,
+          incomeWork: incomeWorkRaw, incomeOther = 0 } = inputs;
+
+  // Zpětná kompat: pokud přijde jen `income`, jde o Pwork.
+  const incomeWorkReported = (incomeWorkRaw !== undefined) ? incomeWorkRaw : (inputs.income || 0);
+
+  // OSVČ hlavní: podlaží na Pwork (§ 5–6 zákona 151/2025: countable income = max(actual, 0,80 × PM))
+  const osvcMainCount = osvc.slice(0, adults).filter(o => o === 'main').length;
+  const osvcFloor = osvcMainCount * CONST.OSVC.mainMin;
+  const osvcFloorApplied = osvcFloor > incomeWorkReported;
+  const incomeWork = Math.max(incomeWorkReported, osvcFloor);
+
+  // P = celkový rozhodný příjem (pro bydlení, živobytí, bonus na dítě, prahy ŽM)
+  const income = incomeWork + incomeOther;
+
+  // § 17 — majetkový test: hard gate, všechny podmínky musí platit
+  const assetsPass = assets ? Object.values(assets).every(v => v === true) : true;
 
   const tc = kids.u6 + kids.p6_15 + kids.p15_26;
   const adultCount = clampN(adults);
@@ -752,12 +864,16 @@ function compute(inputs) {
 
   // 3) Bonus na dítě — § 38–39
   //
-  // POZOR: MPSV kalkulačka vyplácí bonus jen pokud má dítě flag
-  // `zranitelna: "ano"` v payload. Dle § 7 zákona JSOU děti <18 VŽDY zranitelné,
-  // takže v reálném použití bonus pobývá. UI má přepínač childrenVulnerable
-  // (výchozí true), aby replikoval oba scénáře.
+  // Dle § 7 zákona jsou děti <18 let vždy zranitelné → bonus se vyplácí vždy,
+  // pokud je na něj dle příjmového pásma nárok. Přepínač childrenVulnerable
+  // je zachován pro pozpětnou kompatibilitu testů proti MPSV oracle
+  // (MPSV API akceptuje payload se `zranitelna=ne` pro test-mode).
+  //
+  // § 38 — bonus na dítě 6–15 let náleží jen při plnění povinné školní docházky.
+  // Pokud uživatel odškrtne schoolAttendance, bonus za tuto věkovou skupinu nevzniká.
+  const tcEligible = (schoolAttendance ? tc : (kids.u6 + kids.p15_26));
   let childBonus = 0, childPerChild = 0, childBand = 'none';
-  if (tc > 0 && childrenVulnerable) {
+  if (tcEligible > 0 && childrenVulnerable) {
     const r = income / zm;
     if (r < CONST.COEFF.childBandLow) {
       childPerChild = status === 'vulnerable' ? CONST.COEFF.childLowVulnerable : CONST.COEFF.childLow;
@@ -774,39 +890,176 @@ function compute(inputs) {
     } else {
       childBand = 'over';
     }
-    childBonus = Math.round(childPerChild * tc);
+    childBonus = Math.round(childPerChild * tcEligible);
   }
 
-  // 4) Pracovní bonus — § 41
-  // Podmínka "alespoň 1 jiná složka > 0 Kč" — MPSV ji implicitně splňuje:
-  // bydlení > 0 ve fázi nárůstu je standard. Replikujeme MPSV chování
-  // (gate je income > 0).
+  // 4) Pracovní bonus — § 40–41
+  // Počítá se jen z Pwork (příjem z práce / SVČ), NE z ostatních příjmů (důchody, alimenty…).
   const workPeakIncome = CONST.COEFF.workPeak * zm;
   let workBonus = 0;
-  if (income > 0) {
-    if (income <= workPeakIncome) {
-      workBonus = Math.round(CONST.COEFF.workRate * income);
+  if (incomeWork > 0) {
+    if (incomeWork <= workPeakIncome) {
+      workBonus = Math.round(CONST.COEFF.workRate * incomeWork);
     } else {
       workBonus = Math.max(0, Math.round(
         CONST.COEFF.workRate * workPeakIncome
-        - CONST.COEFF.workTaper * (income - workPeakIncome)));
+        - CONST.COEFF.workTaper * (incomeWork - workPeakIncome)));
     }
   }
 
   const rawSum = housing + subsistence + childBonus + workBonus;
-  // Na rozdíl od MPSV (která zaokrouhluje na 100 Kč) vracíme přesnou částku v celých Kč.
-  // MPSV × 100 zaokrouhlení způsobuje umělé skoky 0/100 v „+100 Kč take-home" vzorci.
-  const total100 = Math.round(rawSum);
+  // § 17 — majetkový test hard gate: pokud neprojde, DSSP = 0.
+  const total100 = assetsPass ? Math.round(rawSum) : 0;
 
   return {
-    zm, zmAdults, adultCount, tc,
+    zm, zmAdults, adultCount, tc, tcEligible,
     normRent, normVlastnik, pausal,
     rentRec, energyRec, R, U,
     housing, subsistence, childBonus, workBonus,
     childPerChild, childBand,
     rawSum, total100,
-    housingZeroedReason
+    housingZeroedReason,
+    income, incomeWork, incomeOther,
+    osvcMainCount, osvcFloor, osvcFloorApplied,
+    assetsPass
   };
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Engine "starý systém" — 4 dávky platné do 30. 9. 2025
+// (Příspěvek na bydlení, Doplatek na bydlení, Příspěvek na živobytí, Přídavek na dítě)
+// ZÁMĚR: orientační porovnání („cca ~"), ne přesnost ±100 Kč.
+// Zdroj vzorců: knowledge/superdavka-2026/predchozi-system-davek-2025.md
+// Klíčové zjednodušení:
+//   • PnB normativ ≈ NORM_RENT_v2 + ENERGY_PAUSAL_v2 (2025 normativy se mírně liší).
+//   • Koeficient 0,30 jednotně (Praha-only 0,35 zrušeno k 1. 1. 2023).
+//   • Rodičovský příspěvek se započítává 100 % (žádná výjimka pro děti < 4).
+//   • DnB jen když je domácnost v PnŽ; horní mez = nepokryté skutečné náklady.
+//   • PnD: pracovní bonus +500 Kč, pokud Pwork ≥ 1× ŽM jednotlivce.
+//   • Status "vulnerable" → použijeme vyšší normativ (paralela ke staré praxi).
+// ════════════════════════════════════════════════════════════════════════
+const OLD_CONST = {
+  // Přídavek na dítě 2025 — z. 117/1995 Sb. § 17
+  PND_BASE: { u6: 830, p6_15: 970, p15_26: 1080 },
+  PND_BONUS_WORK: 500,           // zvýšená výměra (rodič má pracovní příjem ≥ 1× ŽM jednotlivce)
+  PND_INCOME_THRESHOLD: 3.4,     // 3,4× ŽM rodiny (čtvrtletní průměr; aproximujeme měsíčním)
+  // Koeficient přiměřených nákladů — 0,30 jednotně (po novele 2023, žádná Praha-výjimka)
+  HOUSING_COEF: 0.30,
+  // Pro DnB / PnŽ se počítá s PnŽ-specifickou redukcí započitatelného příjmu z práce
+  WORK_INCOME_FACTOR: 0.70       // 70 % závislé činnosti (§ 9 odst. 1a z. 111/2006)
+};
+
+function computeOld(inputs) {
+  const {
+    incomeWork = 0,
+    incomeOther = 0,
+    rentActual = 0,
+    energyActual = 0,
+    adults = 1,
+    kids = { u6: 0, p6_15: 0, p15_26: 0 },
+    housingType = 'rental',
+    status = 'active',
+    period = 'before',
+    bydliste = 'Praha+Brno',
+    assets = null
+  } = inputs;
+
+  const adultCount = clampN(adults);
+  const tc = kids.u6 + kids.p6_15 + kids.p15_26;
+
+  // Použij vždy ŽM 2025 (= ZM.before — NV 436/2022 Sb. zůstávalo platné celý 2025).
+  const z = CONST.ZM.before;
+  const adultsPart = adults === 1
+    ? (tc > 0 ? z.firstInMulti : z.single)
+    : z.firstInMulti + (adults - 1) * z.otherAdult;
+  const childrenPart = kids.u6 * z.childU6 + kids.p6_15 * z.child6_15 + kids.p15_26 * z.child15_26;
+  const zmRodiny = adultsPart + childrenPart;
+  const zmJednotlivec = z.single;
+
+  // P_měsíční = celkový čistý měsíční příjem rodiny (bez redukce — pro PnB a PnD)
+  const P = incomeWork + incomeOther;
+
+  // Majetkový test (přibližně srovnatelný s § 17 DSSP — staré PvHN mělo majetkový test taky;
+  // SSP byly bez něj. Aplikujeme jen na PnŽ + DnB jako konzervativní zjednodušení.)
+  const assetsPass = assets ? Object.values(assets).every(v => v === true) : true;
+
+  // Náklady na bydlení — proxy z 2026 normativů (PnB 2025 mělo trochu jinou strukturu)
+  const normRent = CONST.NORM_RENT[status][bydliste][adultCount];
+  const energyPausal = CONST.ENERGY_PAUSAL[status][adultCount];
+  // Aproximace PnB normativu = nájem + energie (PnB 2025 měl jeden „normativ" zahrnující obojí)
+  const oldNormCombined = normRent + energyPausal;
+
+  let nakladyAktualni;
+  if (housingType === 'rental') {
+    nakladyAktualni = rentActual + energyActual;
+  } else if (housingType === 'owner') {
+    // U vlastníka byl PnB normativ vlastnický (nižší než nájemní). Použijeme NORM_VLASTNIK + energie.
+    const normVlastnik = CONST.NORM_VLASTNIK[status][bydliste][adultCount];
+    nakladyAktualni = normVlastnik + energyActual;
+  } else if (housingType === 'other') {
+    nakladyAktualni = Math.min(rentActual, Math.round(0.80 * normRent)) + energyActual;
+  } else {
+    // bez právního titulu — žádná dávka na bydlení
+    nakladyAktualni = 0;
+  }
+  const nakladyCapped = Math.min(nakladyAktualni, oldNormCombined);
+
+  // ── 1) Příspěvek na bydlení (SSP, z. 117/1995 § 24–§ 27) ──────────────
+  // PnB = max(0, nakladyCapped − 0,30 × P)
+  // Podmínka nároku: nakladyAktualni > 0,30 × P  AND  0,30 × P ≤ oldNormCombined
+  let pnb = 0;
+  if (housingType !== 'none' && nakladyAktualni > 0) {
+    const own30 = OLD_CONST.HOUSING_COEF * P;
+    if (nakladyAktualni > own30 && own30 <= oldNormCombined) {
+      pnb = Math.max(0, Math.round(nakladyCapped - own30));
+    }
+  }
+
+  // ── 2) Příspěvek na živobytí (PvHN, z. 111/2006 § 21–§ 32) ────────────
+  // zapoc = 0,70 × Pwork + 1,00 × Pother
+  // odecet_bydleni = min(naklady, 0,30 × zapoc)
+  // PnŽ = max(0, ŽM_rodiny − (zapoc − odecet_bydleni))
+  const zapoc = OLD_CONST.WORK_INCOME_FACTOR * incomeWork + 1.00 * incomeOther;
+  const maxBydleniPnZ = OLD_CONST.HOUSING_COEF * zapoc;
+  const odecetBydleniPnZ = Math.min(nakladyAktualni, maxBydleniPnZ);
+  const prijemPoBydleni = zapoc - odecetBydleniPnZ;
+  let pnz = Math.max(0, Math.round(zmRodiny - prijemPoBydleni));
+  if (!assetsPass) pnz = 0;
+
+  // ── 3) Doplatek na bydlení (PvHN, z. 111/2006 § 33–§ 35) ──────────────
+  // Vyplácí se jen v hmotné nouzi (PnŽ > 0). Pokrývá zbylé skutečné náklady na bydlení
+  // do výše PnB normativu, nepokryté součtem PnB + disponibilního zbytku po PnŽ.
+  let dnb = 0;
+  if (pnz > 0 && housingType !== 'none' && nakladyAktualni > 0) {
+    const disponibilniPoZivobyti = Math.max(0, prijemPoBydleni + pnz - zmRodiny);
+    dnb = Math.max(0, Math.round(nakladyCapped - pnb - disponibilniPoZivobyti));
+  }
+
+  // ── 4) Přídavek na dítě (SSP, z. 117/1995 § 17–§ 19) ──────────────────
+  // Nárok: čistý měsíční příjem rodiny ≤ 3,4 × ŽM rodiny.
+  // Sazba: 830 / 970 / 1 080 Kč podle věku dítěte. Zvýšená výměra (+500) když má alespoň
+  // jeden rodič pracovní příjem ≥ 1× ŽM jednotlivce.
+  let pnd = 0;
+  if (tc > 0 && P <= OLD_CONST.PND_INCOME_THRESHOLD * zmRodiny) {
+    const bonus = incomeWork >= zmJednotlivec ? OLD_CONST.PND_BONUS_WORK : 0;
+    pnd = kids.u6        * (OLD_CONST.PND_BASE.u6 + bonus)
+        + kids.p6_15     * (OLD_CONST.PND_BASE.p6_15 + bonus)
+        + kids.p15_26    * (OLD_CONST.PND_BASE.p15_26 + bonus);
+  }
+
+  const total = pnb + pnz + dnb + pnd;
+
+  return {
+    pnb, pnz, dnb, pnd, total,
+    zmRodiny, oldNormCombined, nakladyCapped, nakladyAktualni,
+    coef: OLD_CONST.HOUSING_COEF
+  };
+}
+
+// Wrapper — na vstup přijme stejné `inputs` jako compute() (DSSP) a vrátí starou dávku.
+// Přímý průchod — všechny potřebné vstupy už máme.
+function computeOldFromDSSP(inputs) {
+  return computeOld(inputs);
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -858,14 +1111,16 @@ function runTests() {
 // ════════════════════════════════════════════════════════════════════════
 // UI wiring
 // ════════════════════════════════════════════════════════════════════════
-const $income   = document.getElementById('income');
-const $rent     = document.getElementById('rent');
-const $energy   = document.getElementById('energy');
-const $bydliste = document.getElementById('bydliste');
-const $lblInc   = document.getElementById('lbl-income');
-const $lblRent  = document.getElementById('lbl-rent');
-const $lblEn    = document.getElementById('lbl-energy');
-const $lblOwner = document.getElementById('lbl-owner-paushal');
+const $income      = document.getElementById('income');
+const $incomeOther = document.getElementById('income-other');
+const $rent        = document.getElementById('rent');
+const $energy      = document.getElementById('energy');
+const $bydliste    = document.getElementById('bydliste');
+const $lblInc      = document.getElementById('lbl-income');
+const $lblIncOther = document.getElementById('lbl-income-other');
+const $lblRent     = document.getElementById('lbl-rent');
+const $lblEn       = document.getElementById('lbl-energy');
+const $lblOwner    = document.getElementById('lbl-owner-paushal');
 const $rentGroup  = document.getElementById('rent-group');
 const $energyGroup = document.getElementById('energy-group');
 const $ownerInfo = document.getElementById('owner-info');
@@ -880,7 +1135,14 @@ let state = {
   housingType: 'rental',
   adults: 1,
   kids: { u6: 0, p6_15: 0, p15_26: 0 },
-  childrenVulnerable: true  // výchozí: děti < 18 jsou zranitelné dle § 7
+  // Výchozí: děti < 18 jsou zranitelné dle § 7 → bonus se vždy vyplácí (odstraněn test-mode toggle).
+  childrenVulnerable: true,
+  // OSVČ per dospělý: 'none' | 'main' | 'side'. Indexováno 0..adults-1.
+  osvc: ['none', 'none', 'none', 'none'],
+  // § 38 — pokud některé dítě 6–15 let neplní povinnou školní docházku, bonus za něj nevzniká.
+  schoolAttendance: true,
+  // § 17 — majetkový test, hard gate. Výchozí: všechno splněno.
+  assets: { liquid: true, secondProperty: true, vehicles: true, luxury: true }
 };
 
 document.querySelectorAll('.toggle-row').forEach(row => {
@@ -898,17 +1160,68 @@ document.querySelectorAll('.toggle-row').forEach(row => {
           $energyGroup.style.display = (val === 'none') ? 'none' : '';
           $ownerInfo.style.display   = (val === 'owner') ? '' : 'none';
           break;
-        case 'adults-toggle':         state.adults = +val; break;
-        case 'children-u6-toggle':    state.kids.u6 = +val; break;
-        case 'children-6-15-toggle':  state.kids.p6_15 = +val; break;
-        case 'children-15-26-toggle': state.kids.p15_26 = +val; break;
-        case 'children-vuln-toggle':  state.childrenVulnerable = (val === 'yes'); break;
+        case 'adults-toggle':         state.adults = +val; renderOsvcRows(); break;
+        case 'children-u6-toggle':    state.kids.u6 = +val; updateSchoolVisibility(); break;
+        case 'children-6-15-toggle':  state.kids.p6_15 = +val; updateSchoolVisibility(); break;
+        case 'children-15-26-toggle': state.kids.p15_26 = +val; updateSchoolVisibility(); break;
       }
       update();
     });
   });
 });
-[$income, $rent, $energy, $bydliste].forEach(el => el.addEventListener('input', update));
+[$income, $incomeOther, $rent, $energy, $bydliste].forEach(el => el.addEventListener('input', update));
+
+// ── Pokročilé parametry: OSVČ per dospělý ──
+function renderOsvcRows() {
+  const wrap = document.getElementById('osvc-rows');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  for (let i = 0; i < state.adults; i++) {
+    const cur = state.osvc[i] || 'none';
+    const row = document.createElement('div');
+    row.style.cssText = 'display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:.5rem;align-items:center';
+    row.innerHTML = `
+      <span style="font-size:.85rem;font-weight:500">Dospělý ${i + 1}</span>
+      <div class="toggle-row osvc-toggle" data-adult="${i}">
+        <button ${cur === 'none' ? 'class="active"' : ''} data-val="none">Není OSVČ</button>
+        <button ${cur === 'main' ? 'class="active"' : ''} data-val="main">OSVČ hlavní</button>
+        <button ${cur === 'side' ? 'class="active"' : ''} data-val="side">OSVČ vedlejší</button>
+      </div>`;
+    wrap.appendChild(row);
+  }
+  wrap.querySelectorAll('.osvc-toggle').forEach(tr => {
+    const idx = +tr.dataset.adult;
+    tr.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        tr.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.osvc[idx] = btn.dataset.val;
+        update();
+      });
+    });
+  });
+}
+
+function updateSchoolVisibility() {
+  const $g = document.getElementById('school-group');
+  if (!$g) return;
+  $g.style.display = state.kids.p6_15 > 0 ? '' : 'none';
+}
+
+document.getElementById('school-attendance').addEventListener('change', e => {
+  state.schoolAttendance = e.target.checked;
+  update();
+});
+
+document.querySelectorAll('.asset-check').forEach(cb => {
+  cb.addEventListener('change', e => {
+    state.assets[e.target.dataset.key] = e.target.checked;
+    update();
+  });
+});
+
+renderOsvcRows();
+updateSchoolVisibility();
 
 // Tooltips
 document.querySelectorAll('.help').forEach(el => {
@@ -931,7 +1244,8 @@ function fmt(n) { return Math.round(n).toLocaleString('cs-CZ') + ' Kč'; }
 
 function update() {
   const inputs = {
-    income: +$income.value,
+    incomeWork: +$income.value,
+    incomeOther: +$incomeOther.value,
     rentActual: +$rent.value,
     energyActual: +$energy.value,
     adults: state.adults,
@@ -940,14 +1254,19 @@ function update() {
     status: state.status,
     period: state.period,
     bydliste: $bydliste.value,
-    childrenVulnerable: state.childrenVulnerable
+    childrenVulnerable: state.childrenVulnerable,
+    osvc: state.osvc,
+    schoolAttendance: state.schoolAttendance,
+    assets: state.assets
   };
 
-  $lblInc.textContent = fmt(inputs.income);
+  $lblInc.textContent = fmt(inputs.incomeWork);
+  $lblIncOther.textContent = fmt(inputs.incomeOther);
   $lblRent.textContent = fmt(inputs.rentActual);
   $lblEn.textContent = fmt(inputs.energyActual);
 
   const r = compute(inputs);
+  const income = r.income;  // P = Pwork (po OSVČ floor) + Pother
 
   if (state.housingType === 'owner') {
     $lblOwner.textContent = fmt(r.rentRec);
@@ -960,7 +1279,7 @@ function update() {
   let energyHint = '';
   if (state.housingType === 'none') {
     energyHint = `Bez bydlení se energie nepočítají.`;
-  } else if (inputs.income >= 1.43 * r.zm) {
+  } else if (income >= 1.43 * r.zm) {
     energyHint = `Z důvodu „vysokého" příjmu se použije paušál ${fmt(r.pausal)}.`;
   } else {
     const cap = Math.round(1.2 * r.pausal);
@@ -987,16 +1306,19 @@ function update() {
   if (r.tc > 0) {
     $bkChild.style.display = '';
     document.getElementById('res-child').textContent = fmt(r.childBonus);
+    const per = Math.round(r.childPerChild);
+    const nDeti = r.tcEligible;
+    const schoolNote = (state.kids.p6_15 > 0 && !state.schoolAttendance)
+      ? ` (bez ${state.kids.p6_15} dětí 6–15 bez docházky)` : '';
     let childNote;
-    if (!state.childrenVulnerable) {
-      childNote = 'Nevyplácí se (MPSV test mode)';
+    if (nDeti === 0) {
+      childNote = 'Žádné dítě nesplňuje podmínky (§ 38).';
     } else {
-      const per = Math.round(r.childPerChild);
       childNote = {
-        low:   `${per} × ${r.tc} dětí (nízký příjem${state.status === 'vulnerable' ? ', zranitelná' : ''})`,
-        mid:   `${per} × ${r.tc} dětí (střední pásmo 1,43 – 3× ŽM)`,
+        low:   `${per} × ${nDeti} dětí (nízký příjem${state.status === 'vulnerable' ? ', zranitelná' : ''})${schoolNote}`,
+        mid:   `${per} × ${nDeti} dětí (střední pásmo 1,43 – 3× ŽM)${schoolNote}`,
         gap:   `P = 3× ŽM — hraniční MPSV quirk (0 Kč)`,
-        taper: `${per} × ${r.tc} (klesá, pásmo 3 – 4× ŽM)`,
+        taper: `${per} × ${nDeti} (klesá, pásmo 3 – 4× ŽM)${schoolNote}`,
         over:  `P ≥ 4× ŽM — nenáleží (0 Kč)`,
         none:  '—'
       }[r.childBand] || '—';
@@ -1006,10 +1328,10 @@ function update() {
     $bkChild.style.display = 'none';
   }
 
-  document.getElementById('res-pct').textContent = 'Příjem + dávka: ' + fmt(inputs.income + r.total100);
+  document.getElementById('res-pct').textContent = 'Příjem + dávka: ' + fmt(income + r.total100);
 
   // Notes
-  const modeEnergy = inputs.income < 1.43 * r.zm
+  const modeEnergy = income < 1.43 * r.zm
     ? `adresná (skutečné, max 1,2× paušál = ${fmt(Math.round(1.2 * r.pausal))})`
     : `paušál ${fmt(r.pausal)}`;
   // ── Housing note ──
@@ -1033,12 +1355,12 @@ function update() {
   // ── Subsistence note ──
   // Formula floor is zmAdults (not full zm); threshold gate is 1.43 × full zm.
   let subsistNote;
-  if (inputs.income >= 1.43 * r.zm) {
+  if (income >= 1.43 * r.zm) {
     subsistNote = `P ≥ 1,43 × ŽM domácnosti (${fmt(1.43 * r.zm)})`;
   } else if (r.subsistence > 0) {
-    subsistNote = `ŽM dospělí ${fmt(r.zmAdults)} − 70 % P (${fmt(0.7 * inputs.income)}) = ${fmt(r.subsistence)}`;
+    subsistNote = `ŽM dospělí ${fmt(r.zmAdults)} − 70 % P (${fmt(0.7 * income)}) = ${fmt(r.subsistence)}`;
   } else {
-    subsistNote = `70 % P (${fmt(0.7 * inputs.income)}) ≥ ŽM dospělí (${fmt(r.zmAdults)})`;
+    subsistNote = `70 % P (${fmt(0.7 * income)}) ≥ ŽM dospělí (${fmt(r.zmAdults)})`;
   }
   document.getElementById('note-subsist').textContent = subsistNote;
 
@@ -1047,19 +1369,25 @@ function update() {
   const wZero = wThr * 7 / 3;  // income kde taper vyčerpá peak (~3,73× ŽM)
   let workNote;
   if (r.workBonus > 0) {
-    workNote = inputs.income <= wThr
-      ? `40 % × ${fmt(inputs.income)}`
-      : `peak ${fmt(0.4 * wThr)} − 30 % × ${fmt(inputs.income - wThr)}`;
-  } else if (inputs.income <= 0) {
+    workNote = r.incomeWork <= wThr
+      ? `40 % × ${fmt(r.incomeWork)} (Pwork)`
+      : `peak ${fmt(0.4 * wThr)} − 30 % × ${fmt(r.incomeWork - wThr)}`;
+  } else if (r.incomeWork <= 0) {
     workNote = 'Bez pracovního příjmu';
   } else {
-    workNote = `P > ${fmt(wZero)} (3,73× ŽM) — bonus vyčerpán`;
+    workNote = `Pwork > ${fmt(wZero)} (3,73× ŽM) — bonus vyčerpán`;
   }
   document.getElementById('note-work').textContent = workNote;
 
   // Alerts
   const alerts = document.getElementById('alerts');
   alerts.innerHTML = '';
+  if (!r.assetsPass) {
+    alerts.innerHTML += `<div class="alert err"><strong>Majetkový test neprochází (§ 17)</strong> — nárok na DSSP nevzniká, celková dávka = 0 Kč. Odškrtnutá tvrzení v „Pokročilé parametry → Majetkový test" znamenají, že domácnost nesplňuje podmínky.</div>`;
+  }
+  if (r.osvcFloorApplied) {
+    alerts.innerHTML += `<div class="alert"><strong>OSVČ hlavní činnost — zákonné minimum</strong>: započítává se ${fmt(r.osvcFloor)} (${r.osvcMainCount}× minimum 39 173 Kč dle § 5–6), nikoli zadaných ${fmt(+$income.value)}. U OSVČ hlavní činnosti zákon ukládá dolní mez 0,80 × průměrné mzdy 2026 (48 967 Kč).</div>`;
+  }
   if (state.status === 'vulnerable') {
     alerts.innerHTML += `<div class="alert">Zranitelná domácnost: platí jen pokud <strong>všichni</strong> členové jsou zranitelní (68+, invalida II/III, těhotná, pečující, samoživitel s dítětem &lt; 7 apod.). Jinak se použije standardní sazba.</div>`;
   }
@@ -1069,16 +1397,22 @@ function update() {
   if (state.housingType === 'other') {
     alerts.innerHTML += `<div class="alert">Jiný prostor k bydlení / ubytovna (§ 24–25): uznává se max. <strong>0,80 × normativ</strong> (${fmt(Math.round(0.80 * r.normRent))} Kč pro ${r.adultCount} dospěl${r.adultCount === 1 ? 'ého' : 'ých'} v ${$bydliste.value}).</div>`;
   }
-  if (r.tc > 0 && !state.childrenVulnerable) {
-    alerts.innerHTML += `<div class="alert">Bonus na dítě nyní <strong>nevyplácen</strong> (MPSV test mode). V praxi jsou děti &lt; 18 let zranitelné dle § 7 — přepněte na „Vyplácet".</div>`;
+  if (state.kids.p6_15 > 0 && !state.schoolAttendance) {
+    alerts.innerHTML += `<div class="alert"><strong>Povinná školní docházka neplněna</strong> — bonus na dítě se neposkytuje za děti 6–15 let (§ 38). Zahrnuto pouze ${r.tcEligible} dětí (mimo věkovou skupinu 6–15).</div>`;
   }
+
+  // Indikace stavu majetkového testu pod checkboxy
+  const $assetsHint = document.getElementById('assets-hint');
+  if ($assetsHint) $assetsHint.style.display = r.assetsPass ? 'none' : '';
 
   // Trace — čitelný pro středoškoláka.
   // Jedna operace = jeden řádek. Spisovná čeština. Bez abbreviatur a šipek.
   const lines = [];
   const n  = (v) => Math.round(v).toLocaleString('cs-CZ');              // 15000 → "15 000"
   const k  = (v) => n(v) + ' Kč';
-  const prijem    = inputs.income;
+  const prijem    = income;         // P = Pwork (po OSVČ floor) + Pother
+  const prijemWork  = r.incomeWork;   // Pwork (pro pracovní bonus)
+  const prijemOther = r.incomeOther;
   const zivMin    = r.zm;
   const zivMinA   = r.zmAdults;
 
@@ -1107,13 +1441,23 @@ function update() {
   // ── Vstupy ─────────────────────────────────────────────
   lines.push('— Vstupy —');
   lines.push(`Domácnost: ${inputs.adults} ${slovoDosp} + ${r.tc} ${slovoDeti}`);
-  lines.push(`Čistý měsíční příjem domácnosti: ${k(prijem)}`);
+  lines.push(`Čistý příjem z práce (Pwork): ${k(prijemWork)}`);
+  if (prijemOther > 0) {
+    lines.push(`Ostatní příjmy (Pother, nezapočítávají se do prac. bonusu): ${k(prijemOther)}`);
+  }
+  lines.push(`Celkový rozhodný příjem (P = Pwork + Pother): ${k(prijem)}`);
+  if (r.osvcFloorApplied) {
+    lines.push(`POZOR: OSVČ hlavní činnost — Pwork byl navýšen na zákonné minimum ${k(r.osvcFloor)} (${r.osvcMainCount} × 39 173 Kč).`);
+  }
   lines.push(`Bydlení: ${bydleniCZ}, nájemní zóna: ${zonaCZ}`);
   if (state.housingType !== 'none') {
     lines.push(`Skutečný nájem: ${k(inputs.rentActual)}`);
     lines.push(`Skutečné náklady na energie: ${k(inputs.energyActual)}`);
   }
   lines.push(`Období: ${obdobiCZ}, status: ${statusCZ}`);
+  if (!r.assetsPass) {
+    lines.push(`MAJETKOVÝ TEST (§ 17) NEPROŠEL — dávka = 0 Kč (hard gate).`);
+  }
   lines.push('');
 
   // ── Životní minimum ────────────────────────────────────
@@ -1238,23 +1582,24 @@ function update() {
 
   // ── Pracovní bonus ────────────────────────────────────
   lines.push('— Pracovní bonus  (§ 40–41) —');
-  if (prijem <= 0) {
+  lines.push(`Počítá se pouze z Pwork (příjem z práce / SVČ) — ne z ostatních příjmů (důchody, alimenty…).`);
+  if (prijemWork <= 0) {
     lines.push('Domácnost nemá pracovní příjem. Pracovní bonus = 0 Kč.');
-  } else if (prijem <= prah16) {
-    lines.push(`Příjem ${n(prijem)} je v rozmezí plného bonusu (do 1,6 × ŽM = ${n(prah16)}).`);
-    lines.push(`Pracovní bonus = 40 % čistého příjmu:`);
-    lines.push(`    0,40 × ${n(prijem)} = ${k(r.workBonus)}`);
-  } else if (prijem < prah373) {
+  } else if (prijemWork <= prah16) {
+    lines.push(`Pwork ${n(prijemWork)} je v rozmezí plného bonusu (do 1,6 × ŽM = ${n(prah16)}).`);
+    lines.push(`Pracovní bonus = 40 % Pwork:`);
+    lines.push(`    0,40 × ${n(prijemWork)} = ${k(r.workBonus)}`);
+  } else if (prijemWork < prah373) {
     const vrchol = Math.round(0.40 * prah16);
-    const presah = prijem - prah16;
+    const presah = prijemWork - prah16;
     const redukc = Math.round(0.30 * presah);
-    lines.push(`Příjem ${n(prijem)} je nad 1,6 × ŽM = ${n(prah16)} — bonus se snižuje.`);
+    lines.push(`Pwork ${n(prijemWork)} je nad 1,6 × ŽM = ${n(prah16)} — bonus se snižuje.`);
     lines.push(`Vrchol bonusu: 0,40 × ${n(prah16)} = ${k(vrchol)}`);
-    lines.push(`Přesah nad práh: ${n(prijem)} − ${n(prah16)} = ${k(presah)}`);
+    lines.push(`Přesah nad práh: ${n(prijemWork)} − ${n(prah16)} = ${k(presah)}`);
     lines.push(`Redukce: 0,30 × ${n(presah)} = ${k(redukc)}`);
     lines.push(`Pracovní bonus = vrchol − redukce = ${n(vrchol)} − ${n(redukc)} = ${k(r.workBonus)}`);
   } else {
-    lines.push(`Příjem ${n(prijem)} dosahuje 3,73 × ŽM (${n(prah373)}) — bonus je vyčerpán.`);
+    lines.push(`Pwork ${n(prijemWork)} dosahuje 3,73 × ŽM (${n(prah373)}) — bonus je vyčerpán.`);
     lines.push('Pracovní bonus = 0 Kč.');
   }
   lines.push('');
@@ -1282,7 +1627,7 @@ function update() {
   barEl.innerHTML = segs.map(s => `<div class="bar-seg" style="width:${s.w}%;background:${s.c}"></div>`).join('');
 
   // Take-home per +100 Kč
-  const rNext = compute({ ...inputs, income: inputs.income + 100 });
+  const rNext = compute({ ...inputs, incomeWork: inputs.incomeWork + 100 });
   const benefitDelta = rNext.total100 - r.total100;
   const takeHome = 100 + benefitDelta;
   const thEl = document.getElementById('result-total');
@@ -1298,6 +1643,20 @@ function update() {
   if (absDelta === 0) thSubEl.textContent = 'dávka se nemění';
   else if (benefitDelta < 0) thSubEl.textContent = `dávka se sníží o ${absDelta} Kč`;
   else thSubEl.textContent = `dávka přidá dalších ${absDelta} Kč`;
+
+  // ── Předchozí systém (do 9/2025) — orientační ──
+  const old = computeOldFromDSSP(inputs);
+  document.getElementById('res-old-total').textContent = '~' + fmt(old.total);
+  const oldRows = [
+    { lbl: 'Příspěvek na bydlení',  v: old.pnb },
+    { lbl: 'Příspěvek na živobytí', v: old.pnz },
+    { lbl: 'Doplatek na bydlení',   v: old.dnb },
+    { lbl: 'Přídavek na dítě',      v: old.pnd, hide: r.tc === 0 }
+  ];
+  document.getElementById('old-breakdown').innerHTML = oldRows
+    .filter(row => !row.hide)
+    .map(row => `<div class="row${row.v === 0 ? ' zero' : ''}"><span>${row.lbl}</span><span class="v">${row.v === 0 ? '0' : '~' + fmt(row.v)}</span></div>`)
+    .join('');
 
   drawChart(inputs);
   drawChart2(inputs);
@@ -1321,18 +1680,21 @@ function drawChart(inputs) {
 
   const maxIncome = chartMaxIncome(inputs);
   const steps = 200;
-  const series = { housing: [], subsist: [], child: [], work: [], total: [] };
+  const series = { housing: [], subsist: [], child: [], work: [], total: [], oldTotal: [] };
   let maxY = 0;
   for (let i = 0; i <= steps; i++) {
     const inc = (i / steps) * maxIncome;
-    const rr = compute({ ...inputs, income: inc });
+    const rr = compute({ ...inputs, incomeWork: inc });
     series.housing.push(rr.housing);
     series.subsist.push(rr.subsistence);
     series.child.push(rr.childBonus);
     series.work.push(rr.workBonus);
     const tot = rr.housing + rr.subsistence + rr.childBonus + rr.workBonus;
     series.total.push(tot);
+    const oldR = computeOldFromDSSP({ ...inputs, incomeWork: inc });
+    series.oldTotal.push(oldR.total);
     if (tot > maxY) maxY = tot;
+    if (oldR.total > maxY) maxY = oldR.total;
   }
   maxY = Math.ceil(maxY / 1000) * 1000 || 1000;
 
@@ -1355,7 +1717,7 @@ function drawChart(inputs) {
     ctx.beginPath(); ctx.moveTo(x(v), pad.t); ctx.lineTo(x(v), pad.t + ch); ctx.stroke();
     ctx.fillText(Math.round(v / 1000) + 'k', x(v), pad.t + ch + 16);
   }
-  ctx.fillText('Čistý příjem (Kč)', pad.l + cw / 2, H - 4);
+  ctx.fillText('Čistý příjem z práce (Kč)', pad.l + cw / 2, H - 4);
   ctx.save(); ctx.translate(12, pad.t + ch / 2); ctx.rotate(-Math.PI / 2);
   ctx.fillText('Dávka (Kč)', 0, 0); ctx.restore();
 
@@ -1405,16 +1767,27 @@ function drawChart(inputs) {
   drawLine(series.work, cs.getPropertyValue('--c-work').trim(), 2);
   drawLine(series.total, cs.getPropertyValue('--c-total').trim(), 2.5);
 
+  // ── Předchozí systém — čárkovaná linka (orientačně) ──
+  ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.strokeStyle = mutedColor; ctx.lineWidth = 1.6;
+  for (let i = 0; i <= steps; i++) {
+    const px = pad.l + (i / steps) * cw;
+    const py = y(series.oldTotal[i]);
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
   // Current marker
   ctx.setLineDash([6, 4]);
   ctx.strokeStyle = cs.getPropertyValue('--c-accent').trim();
   ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(x(inputs.income), pad.t); ctx.lineTo(x(inputs.income), pad.t + ch); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x(inputs.incomeWork), pad.t); ctx.lineTo(x(inputs.incomeWork), pad.t + ch); ctx.stroke();
   ctx.setLineDash([]);
   const curR = compute(inputs);
   const curTot = curR.housing + curR.subsistence + curR.childBonus + curR.workBonus;
   ctx.beginPath();
-  ctx.arc(x(inputs.income), y(curTot), 5, 0, Math.PI * 2);
+  ctx.arc(x(inputs.incomeWork), y(curTot), 5, 0, Math.PI * 2);
   ctx.fillStyle = cs.getPropertyValue('--c-accent').trim(); ctx.fill();
   ctx.strokeStyle = cs.getPropertyValue('--c-card').trim(); ctx.lineWidth = 2; ctx.stroke();
 
@@ -1426,10 +1799,18 @@ function drawChart(inputs) {
   ];
   if (tc > 0) legends.push({ lbl: 'Děti', c: cs.getPropertyValue('--c-child').trim() });
   legends.push({ lbl: 'Prac. bonus', c: cs.getPropertyValue('--c-work').trim() });
+  legends.push({ lbl: 'Starý systém (cca)', c: mutedColor, dashed: true });
   let lx = pad.l + 8;
   legends.forEach(l => {
-    ctx.fillStyle = l.c; ctx.fillRect(lx, pad.t + 4, 14, 3);
-    ctx.fillStyle = mutedColor; ctx.textAlign = 'left';
+    ctx.textAlign = 'left';
+    if (l.dashed) {
+      ctx.setLineDash([4, 3]); ctx.strokeStyle = l.c; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(lx, pad.t + 6); ctx.lineTo(lx + 14, pad.t + 6); ctx.stroke();
+      ctx.setLineDash([]);
+    } else {
+      ctx.fillStyle = l.c; ctx.fillRect(lx, pad.t + 4, 14, 3);
+    }
+    ctx.fillStyle = mutedColor;
     ctx.fillText(l.lbl, lx + 18, pad.t + 10);
     lx += ctx.measureText(l.lbl).width + 30;
   });
@@ -1449,13 +1830,19 @@ function drawChart2(inputs) {
   const maxIncome = chartMaxIncome(inputs);
   const steps = 200;
   const disposable = [];
+  const disposableOld = [];
+  const incomeOther = +inputs.incomeOther || 0;
   let maxY = 0;
   for (let i = 0; i <= steps; i++) {
     const inc = (i / steps) * maxIncome;
-    const rr = compute({ ...inputs, income: inc });
-    const d = inc + rr.housing + rr.subsistence + rr.childBonus + rr.workBonus;
+    const rr = compute({ ...inputs, incomeWork: inc });
+    const d = inc + incomeOther + rr.housing + rr.subsistence + rr.childBonus + rr.workBonus;
     disposable.push(d);
+    const oldR = computeOldFromDSSP({ ...inputs, incomeWork: inc });
+    const dOld = inc + incomeOther + oldR.total;
+    disposableOld.push(dOld);
     if (d > maxY) maxY = d;
+    if (dOld > maxY) maxY = dOld;
   }
   maxY = Math.ceil(maxY / 5000) * 5000 || 5000;
 
@@ -1481,7 +1868,7 @@ function drawChart2(inputs) {
     ctx2.beginPath(); ctx2.moveTo(x(v), pad.t); ctx2.lineTo(x(v), pad.t + ch); ctx2.stroke();
     ctx2.fillText(Math.round(v / 1000) + 'k', x(v), pad.t + ch + 16);
   }
-  ctx2.fillText('Čistý příjem (Kč)', pad.l + cw / 2, H - 4);
+  ctx2.fillText('Čistý příjem z práce (Kč)', pad.l + cw / 2, H - 4);
   ctx2.save(); ctx2.translate(12, pad.t + ch / 2); ctx2.rotate(-Math.PI / 2);
   ctx2.fillText('Čistý příjem + dávka (Kč)', 0, 0); ctx2.restore();
 
@@ -1514,15 +1901,26 @@ function drawChart2(inputs) {
   }
   ctx2.stroke();
 
+  // ── Předchozí systém — čárkovaná linka (orientačně) ──
+  ctx2.setLineDash([6, 5]);
+  ctx2.beginPath(); ctx2.strokeStyle = mutedColor; ctx2.lineWidth = 1.6;
+  for (let i = 0; i <= steps; i++) {
+    const inc = (i / steps) * maxIncome;
+    const py = y(disposableOld[i]);
+    i === 0 ? ctx2.moveTo(x(inc), py) : ctx2.lineTo(x(inc), py);
+  }
+  ctx2.stroke();
+  ctx2.setLineDash([]);
+
   ctx2.setLineDash([6, 4]);
   ctx2.strokeStyle = accentColor; ctx2.lineWidth = 1.5;
   ctx2.beginPath();
-  ctx2.moveTo(x(inputs.income), pad.t); ctx2.lineTo(x(inputs.income), pad.t + ch); ctx2.stroke();
+  ctx2.moveTo(x(inputs.incomeWork), pad.t); ctx2.lineTo(x(inputs.incomeWork), pad.t + ch); ctx2.stroke();
   ctx2.setLineDash([]);
   const curR = compute(inputs);
-  const curDisp = inputs.income + curR.housing + curR.subsistence + curR.childBonus + curR.workBonus;
+  const curDisp = curR.income + curR.housing + curR.subsistence + curR.childBonus + curR.workBonus;
   ctx2.beginPath();
-  ctx2.arc(x(inputs.income), y(curDisp), 5, 0, Math.PI * 2);
+  ctx2.arc(x(inputs.incomeWork), y(curDisp), 5, 0, Math.PI * 2);
   ctx2.fillStyle = accentColor; ctx2.fill();
   ctx2.strokeStyle = cs.getPropertyValue('--c-card').trim(); ctx2.lineWidth = 2; ctx2.stroke();
 
@@ -1538,10 +1936,16 @@ function drawChart2(inputs) {
   ctx2.beginPath(); ctx2.moveTo(lx, pad.t + 6); ctx2.lineTo(lx + 14, pad.t + 6); ctx2.stroke();
   ctx2.setLineDash([]);
   ctx2.fillText('Bez dávky (45°)', lx + 18, pad.t + 10);
+  lx += 110;
+  ctx2.setLineDash([6, 5]);
+  ctx2.strokeStyle = mutedColor; ctx2.lineWidth = 1.6;
+  ctx2.beginPath(); ctx2.moveTo(lx, pad.t + 6); ctx2.lineTo(lx + 14, pad.t + 6); ctx2.stroke();
+  ctx2.setLineDash([]);
+  ctx2.fillText('Příjem + starý systém (cca)', lx + 18, pad.t + 10);
 }
 
 // ── Expose for test harness ──
-window.__DSSP = { compute, CONST, zmHousehold };
+window.__DSSP = { compute, computeOld, computeOldFromDSSP, CONST, OLD_CONST, zmHousehold };
 
 window.addEventListener('resize', update);
 update();
