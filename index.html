@@ -458,14 +458,6 @@
         </div>
       </div>
 
-      <!-- OSVČ per dospělý -->
-      <div class="input-group">
-        <label>
-          <span>Samostatná výdělečná činnost (OSVČ) <span class="help" data-tip="Pro výpočet rozhodného příjmu DSSP se z SVČ bere 50 % daňového základu dělených 12 (§ 12 odst. 3). OSVČ hlavní činnost: kalkulačka imputuje dolní mez 39 173 Kč/měs. (0,80 × PM 2026) — pokud deklarujete méně, úřad práce může vyžádat daňové přiznání.">?</span></span>
-        </label>
-        <div id="osvc-rows" style="display:flex;flex-direction:column;gap:.45rem;margin-top:.3rem"></div>
-      </div>
-
     </div>
   </details>
 </div>
@@ -548,7 +540,7 @@
   <p style="margin:.1rem 0 .7rem 0;line-height:1.5">
     Na <strong>9 798 modelových rodinách</strong> (1–2 dospělí, 0–4 děti, tři typy bydlení, zaměstnání i OSVČ) vychází jasný obraz: superdávka <strong>nahrává pracujícím</strong>, ale <strong>ořezává podporu při nulovém či velmi nízkém příjmu</strong> — zvlášť u vícedětných rodin.
   </p>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-top:.4rem">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.8rem;margin-top:.4rem">
     <div style="padding:.75rem .9rem;border-radius:8px;background:rgba(22,163,74,.08);border-left:3px solid #16a34a">
       <div style="font-size:.78rem;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35rem">✓ Získávají</div>
       <ul style="margin:0;padding-left:1.1rem;font-size:.88rem;line-height:1.55">
@@ -1122,7 +1114,7 @@ function compute(inputs) {
           adults = 1, kids = { u6: 0, p6_15: 0, p15_26: 0 },
           housingType = 'rental', status = 'active', period = 'before', bydliste = 'Praha+Brno',
           childrenVulnerable = true,
-          osvc = [], assets = null,
+          osvc = [],
           adultOverrides = [], childOverrides = [],
           tuhaPaliva = 'ne',
           substandard = false,
@@ -1242,24 +1234,24 @@ function compute(inputs) {
   //   kažící adult přispívá 0.  Solo způsobilý dospělý + žádná další osoba → z.single,
   //   jinak firstInMulti + (n-1) × otherAdult.
   let subsistence = 0;
+  let subsistenceFloor = 0;
   {
     const z = CONST.ZM[period];
     const isValidPerson = o => o.pracovneAktivni === 'ano' || o.zranitelna === 'ano';
     const validAdults = canonAdults.filter(isValidPerson);
-    let floor = 0;
     if (validAdults.length >= 1) {
-      floor += (validAdults.length === 1 && canon.length === 1) ? z.single : z.firstInMulti;
-      if (validAdults.length > 1) floor += (validAdults.length - 1) * z.otherAdult;
+      subsistenceFloor += (validAdults.length === 1 && canon.length === 1) ? z.single : z.firstInMulti;
+      if (validAdults.length > 1) subsistenceFloor += (validAdults.length - 1) * z.otherAdult;
     }
     for (const c of canonChildren) {
       if (c.zranitelna === 'ano') {
-        if (c.vek < 6) floor += z.childU6;
-        else if (c.vek < 15) floor += z.child6_15;
-        else floor += z.child15_26;
+        if (c.vek < 6) subsistenceFloor += z.childU6;
+        else if (c.vek < 15) subsistenceFloor += z.child6_15;
+        else subsistenceFloor += z.child15_26;
       }
     }
     if (RP < CONST.COEFF.subsistThreshold * zm) {
-      subsistence = Math.round(Math.max(0, floor - CONST.COEFF.incomeDeduct * RP));
+      subsistence = Math.round(Math.max(0, subsistenceFloor - CONST.COEFF.incomeDeduct * RP));
     }
   }
 
@@ -1304,16 +1296,13 @@ function compute(inputs) {
   //   - stavby k bydlení: odepřen iff ≥ 2, ale u vlastní+užitoKVlastnimu=ano
   //     se první stavba počítá jako trvalé bydliště a neblokuje
   //   - úspory nad limit: vždy blokuje
-  // Legacy `assets` (4 checkboxy) zůstává pro zpětnou kompat.
   const driversCount = canon.filter(o => o.vek >= 18).length;
   // UI nevystavuje samostatný `uzitoKVlastnimuBydleni` toggle; `housingType==='owner'`
   // implicitně znamená vlastní+užito=ano (viz updateAssetsHint u stavebOffset).
   const primaryStavbaOffset = (housingType === 'owner') ? 1 : 0;
-  const legacyAssetsPass = assets ? Object.values(assets).every(v => v === true) : true;
-  const newAssetsPass = (pocetAutomobilu <= driversCount)
+  const assetsPass = (pocetAutomobilu <= driversCount)
     && ((pocetVlastnichStavebKBydleni - primaryStavbaOffset) < 2)
     && (usporyViceNezLimit !== 'ano');
-  const assetsPass = legacyAssetsPass && newAssetsPass;
 
   // Domácnost musí mít alespoň jednu způsobilou osobu (pracovně aktivní nebo zranitelnou).
   //   Samotná "nezaopatřenost" NEstačí — nezaopatřené dítě se zranitelnost=ne kazí nárok.
@@ -1331,7 +1320,7 @@ function compute(inputs) {
     zm, zmAdults, adultCount, tc, tcEligible,
     normRent, normVlastnik, pausal,
     rentRec, energyRec, R, U,
-    housing, subsistence, childBonus, workBonus,
+    housing, subsistence, subsistenceFloor, childBonus, workBonus,
     childPerChild, childBand,
     rawSum, total100,
     housingZeroedReason,
@@ -1600,7 +1589,18 @@ document.querySelectorAll('.toggle-row').forEach(row => {
       btn.classList.add('active');
       const val = btn.dataset.val;
       switch (row.id) {
-        case 'status-toggle':       state.status = val; break;
+        case 'status-toggle':
+          state.status = val;
+          // Cascade do per-osoba přepisů: "Všichni zranitelní" = každý 'ano';
+          // návrat na "Nikdo / smíšené" = každý 'ne'. Uživatel může poté per osoba ručně přepsat.
+          {
+            const target = val === 'vulnerable' ? 'ano' : 'ne';
+            for (const ov of state.adultOverrides) ov.zranitelna = target;
+            for (const ov of state.childOverrides) ov.zranitelna = target;
+            renderAdultRows();
+            renderChildRows();
+          }
+          break;
         case 'period-toggle':       state.period = val; break;
         case 'housing-type-toggle':
           state.housingType = val;
@@ -1613,7 +1613,6 @@ document.querySelectorAll('.toggle-row').forEach(row => {
           break;
         case 'adults-toggle':
           state.adults = +val;
-          renderOsvcRows();
           renderAdultRows();
           break;
         case 'children-u6-toggle':
@@ -1656,38 +1655,7 @@ document.querySelectorAll('.toggle-row').forEach(row => {
 });
 [$income, $incomeOther, $rent, $energy, $bydliste].forEach(el => el.addEventListener('input', update));
 
-// ── Pokročilé parametry: OSVČ per dospělý ──
-function renderOsvcRows() {
-  const wrap = document.getElementById('osvc-rows');
-  if (!wrap) return;
-  wrap.innerHTML = '';
-  for (let i = 0; i < state.adults; i++) {
-    const cur = state.osvc[i] || 'none';
-    const row = document.createElement('div');
-    row.style.cssText = 'display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:.5rem;align-items:center';
-    row.innerHTML = `
-      <span style="font-size:.85rem;font-weight:500">Dospělý ${i + 1}</span>
-      <div class="toggle-row osvc-toggle" data-adult="${i}">
-        <button ${cur === 'none' ? 'class="active"' : ''} data-val="none">Není OSVČ</button>
-        <button ${cur === 'main' ? 'class="active"' : ''} data-val="main">OSVČ hlavní</button>
-        <button ${cur === 'side' ? 'class="active"' : ''} data-val="side">OSVČ vedlejší</button>
-      </div>`;
-    wrap.appendChild(row);
-  }
-  wrap.querySelectorAll('.osvc-toggle').forEach(tr => {
-    const idx = +tr.dataset.adult;
-    tr.querySelectorAll('button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        tr.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        state.osvc[idx] = btn.dataset.val;
-        update();
-      });
-    });
-  });
-}
-
-// ── Per-adult rows (vek, zranitelná, pracovněAktivní, výživné přijaté) ──
+// ── Per-adult rows (vek, zranitelná, pracovněAktivní, výživné přijaté, OSVČ) ──
 function renderAdultRows() {
   const wrap = document.getElementById('adults-rows');
   if (!wrap) return;
@@ -1695,12 +1663,15 @@ function renderAdultRows() {
   wrap.innerHTML = '';
   for (let i = 0; i < state.adults; i++) {
     const ov = state.adultOverrides[i] || (state.adultOverrides[i] = {});
+    if (ov.zranitelna === undefined) ov.zranitelna = (state.status === 'vulnerable' ? 'ano' : 'ne');
+    if (ov.pracovneAktivni === undefined) ov.pracovneAktivni = 'ano';
     const vek = ov.vek ?? 35;
-    const zr  = ov.zranitelna ?? '';
-    const pa  = ov.pracovneAktivni ?? 'ano';
+    const zr  = ov.zranitelna;
+    const pa  = ov.pracovneAktivni;
     const vyz = ov.vyzivne ?? 'ne';
     const vyzVyseVisible = vyz === 'ano - soudem' || vyz === 'ano - neformálne';
     const vyzVyse = ov.vyzivneVyse ?? 0;
+    const osvc = state.osvc[i] || 'none';
     const row = document.createElement('div');
     row.style.cssText = 'border:1px solid var(--c-border);border-radius:8px;padding:.5rem .6rem;display:flex;flex-direction:column;gap:.45rem;font-size:.85rem';
     row.innerHTML = `
@@ -1711,9 +1682,8 @@ function renderAdultRows() {
           <input type="range" min="18" max="99" step="1" value="${vek}" data-adult="${i}" data-field="vek" style="flex:1">
           <span style="min-width:2.2rem;text-align:right;font-weight:600" id="adult-vek-lbl-${i}">${vek} let</span>
         </div>
-        <span>Zranitelná <span class="help" data-tip="§ 7 — 68+, invalida II/III, těhotná, rodič malého dítěte, pečující, vdova/vdovec ≤ 12m, student ≤ 26. 'Vychozí' = dědí agregát ze Základních parametrů.">?</span></span>
+        <span>Zranitelná <span class="help" data-tip="§ 7 — 68+, invalida II/III, těhotná, rodič malého dítěte, pečující, vdova/vdovec ≤ 12m, student ≤ 26.">?</span></span>
         <div class="toggle-row adult-zr-toggle" data-adult="${i}">
-          <button ${zr === '' ? 'class="active"' : ''} data-val="">Vých.</button>
           <button ${zr === 'ne' ? 'class="active"' : ''} data-val="ne">Ne</button>
           <button ${zr === 'ano' ? 'class="active"' : ''} data-val="ano">Ano</button>
         </div>
@@ -1735,6 +1705,12 @@ function renderAdultRows() {
           <input type="range" min="0" max="20000" step="500" value="${vyzVyse}" data-adult="${i}" data-field="vyzivneVyse" style="flex:1">
           <span style="min-width:4.5rem;text-align:right;font-weight:600" id="adult-vyz-lbl-${i}">${vyzVyse.toLocaleString('cs-CZ')} Kč</span>
         </div>` : ''}
+        <span>OSVČ <span class="help" data-tip="Pro výpočet rozhodného příjmu DSSP se z SVČ bere 50 % daňového základu dělených 12 (§ 12 odst. 3). OSVČ hlavní činnost: kalkulačka imputuje dolní mez 39 173 Kč/měs. (0,80 × PM 2026) — pokud deklarujete méně, úřad práce může vyžádat daňové přiznání.">?</span></span>
+        <div class="toggle-row adult-osvc-toggle" data-adult="${i}">
+          <button ${osvc === 'none' ? 'class="active"' : ''} data-val="none">Není</button>
+          <button ${osvc === 'main' ? 'class="active"' : ''} data-val="main">Hlavní</button>
+          <button ${osvc === 'side' ? 'class="active"' : ''} data-val="side">Vedlejší</button>
+        </div>
       </div>`;
     wrap.appendChild(row);
   }
@@ -1754,9 +1730,18 @@ function renderAdultRows() {
       btn.addEventListener('click', () => {
         tr.querySelectorAll('button').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        const v = btn.dataset.val;
-        if (v === '') delete state.adultOverrides[idx].zranitelna;
-        else state.adultOverrides[idx].zranitelna = v;
+        state.adultOverrides[idx].zranitelna = btn.dataset.val;
+        update();
+      });
+    });
+  });
+  wrap.querySelectorAll('.adult-osvc-toggle').forEach(tr => {
+    const idx = +tr.dataset.adult;
+    tr.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        tr.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.osvc[idx] = btn.dataset.val;
         update();
       });
     });
@@ -1850,9 +1835,9 @@ function renderChildRows() {
 function updateAssetsHint() {
   const $h = document.getElementById('assets-hint');
   if (!$h) return;
-  // Drivers = persons with vek ≥ 18 (includes adults + any adultOverrides ≥ 18;
-  // children are always <15 here).  Per § 17: max 1 auto per driver.
-  const drivers = state.adults; // all rendered adults default vek=35; override can drop to 18+
+  // Drivers = osoby s vek ≥ 18 — engine (compute L1300) počítá dospělé + studenty 15–26
+  // (default vek=20).  Musí se shodovat, jinak hint svádí uživatele.
+  const drivers = state.adults + (state.kids.p15_26 || 0);
   // Staveb: if housing=vlastní AND uzitoKVlastnimuBydleni=ano, 1 counts as primary.
   // UI doesn't currently expose uzito toggle; default assumption: vlastní => implicitly uzito=ano.
   const stavebOffset = state.housingType === 'owner' ? 1 : 0;
@@ -1862,7 +1847,6 @@ function updateAssetsHint() {
   $h.style.display = fail ? '' : 'none';
 }
 
-renderOsvcRows();
 renderAdultRows();
 renderChildRows();
 updateAssetsHint();
@@ -1946,7 +1930,7 @@ function update() {
     $hintEnergy.textContent = '';
   }
 
-  document.getElementById('res-total').textContent = fmt(r.total100);
+  document.getElementById('res-total').textContent = fmt(r.narokPrekazen ? 0 : r.rawSum);
   document.getElementById('res-housing').textContent = fmt(r.housing);
   document.getElementById('res-subsist').textContent = fmt(r.subsistence);
   document.getElementById('res-work').textContent = fmt(r.workBonus);
@@ -1975,7 +1959,7 @@ function update() {
     $bkChild.style.display = 'none';
   }
 
-  document.getElementById('res-pct').textContent = 'Příjem + dávka: ' + fmt(income + r.total100);
+  document.getElementById('res-pct').textContent = 'Příjem + dávka: ' + fmt(income + (r.narokPrekazen ? 0 : r.rawSum));
 
   // Notes
   const modeEnergy = income < 1.43 * r.zm
@@ -2000,14 +1984,16 @@ function update() {
   document.getElementById('note-housing').innerHTML = housingNote;
 
   // ── Subsistence note ──
-  // Formula floor is zmAdults (not full zm); threshold gate is 1.43 × full zm.
+  // Floor = ŽM způsobilých dospělých + Σ ŽM zranitelných dětí (viz engine L1237-1252).
+  // Gate: RP < 1,43 × ŽM celé domácnosti (včetně kažících osob).
   let subsistNote;
-  if (income >= 1.43 * r.zm) {
-    subsistNote = `P ≥ 1,43 × ŽM domácnosti (${fmt(1.43 * r.zm)})`;
+  const subsistRP = r.RP;
+  if (subsistRP >= 1.43 * r.zm) {
+    subsistNote = `RP ≥ 1,43 × ŽM domácnosti (${fmt(1.43 * r.zm)})`;
   } else if (r.subsistence > 0) {
-    subsistNote = `ŽM dospělí ${fmt(r.zmAdults)} − 70 % P (${fmt(0.7 * income)}) = ${fmt(r.subsistence)}`;
+    subsistNote = `Minimum způs. osob ${fmt(r.subsistenceFloor)} − 70 % RP (${fmt(0.7 * subsistRP)}) = ${fmt(r.subsistence)}`;
   } else {
-    subsistNote = `70 % P (${fmt(0.7 * income)}) ≥ ŽM dospělí (${fmt(r.zmAdults)})`;
+    subsistNote = `70 % RP (${fmt(0.7 * subsistRP)}) ≥ minimum způs. osob (${fmt(r.subsistenceFloor)})`;
   }
   document.getElementById('note-subsist').textContent = subsistNote;
 
@@ -2289,9 +2275,13 @@ function update() {
   ];
   barEl.innerHTML = segs.map(s => `<div class="bar-seg" style="width:${s.w}%;background:${s.c}"></div>`).join('');
 
-  // Take-home per +100 Kč
+  // Take-home per +100 Kč — srovnáváme rawSum (nezaokrouhleno na 100 Kč),
+  // jinak by delta vždy padala na násobek 100 a marginální sazba by se zobrazila skokově.
+  // Pokud je nárok překažen majetkovým testem, efektivní dávka = 0.
   const rNext = compute({ ...inputs, incomeWork: inputs.incomeWork + 100 });
-  const benefitDelta = rNext.total100 - r.total100;
+  const effNow  = r.narokPrekazen     ? 0 : r.rawSum;
+  const effNext = rNext.narokPrekazen ? 0 : rNext.rawSum;
+  const benefitDelta = effNext - effNow;
   const takeHome = 100 + benefitDelta;
   const thEl = document.getElementById('result-total');
   const thValEl = document.getElementById('th-val');
