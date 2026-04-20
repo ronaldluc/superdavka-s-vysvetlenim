@@ -1306,8 +1306,9 @@ function compute(inputs) {
   //   - úspory nad limit: vždy blokuje
   // Legacy `assets` (4 checkboxy) zůstává pro zpětnou kompat.
   const driversCount = canon.filter(o => o.vek >= 18).length;
-  const primaryStavbaOffset =
-    (vlastniNeboNajemni === 'vlastní' && uzitoKVlastnimuBydleni === 'ano') ? 1 : 0;
+  // UI nevystavuje samostatný `uzitoKVlastnimuBydleni` toggle; `housingType==='owner'`
+  // implicitně znamená vlastní+užito=ano (viz updateAssetsHint u stavebOffset).
+  const primaryStavbaOffset = (housingType === 'owner') ? 1 : 0;
   const legacyAssetsPass = assets ? Object.values(assets).every(v => v === true) : true;
   const newAssetsPass = (pocetAutomobilu <= driversCount)
     && ((pocetVlastnichStavebKBydleni - primaryStavbaOffset) < 2)
