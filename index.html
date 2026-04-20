@@ -240,10 +240,10 @@
 
 <header>
   <h1>Superdávka (DSSP) 2026<span class="v">v2</span></h1>
-  <div class="sub">Interaktivní kalkulačka s vysvětlením níže. Engine je shodný 1 : 1 s oficiální kalkulačkou MPSV na každé ose vstupů (21 023 897 ověřených výpočtů, 99,98 % přesná shoda na celkové dávce).</div>
+  <div class="sub">Interaktivní kalkulačka s vysvětlením níže. 21 023 897 ověřených výpočtů robotem v kalkulačce MPSV.</div>
   <div class="badges">
     <span class="badge law">Zákon č. 151/2025 Sb.</span>
-    <span class="badge ok" id="badge-accuracy">Shoda s MPSV: 100 %</span>
+    <span class="badge ok" id="badge-accuracy">Shoda s MPSV: 99,98 %</span>
   </div>
 </header>
 
@@ -554,7 +554,7 @@
       <ul style="margin:0;padding-left:1.1rem;font-size:.88rem;line-height:1.55">
         <li>Rodiny s velmi nízkým či nulovým příjmem — propad typicky <strong>−1 000 až −6 000 Kč/měs</strong>. Pracovní bonus na nízkých příjmech téměř nepřispívá.</li>
         <li>Pracující jednotlivci a páry s <strong>příjmem nad ~1,6× ŽM na dospělého</strong> — pracovní bonus klesá (0,30 taper) a čistá dávka už nestíhá starý PnB+PnD.</li>
-        <li><strong>OSVČ hlavní s nulovým reálným příjmem</strong>: zákon § 12 imputuje minimální základ (cca <strong>39 173 Kč/měs</strong>, 80 % prům. mzdy 2026). Tato kalkulačka to prozatím nemodeluje — oficiální MPSV výpočet dojde ke znatelně nižší nové dávce, než ukazuje tento řádek.</li>
+        <li><strong>OSVČ hlavní s nulovým reálným příjmem</strong>: nová dávka počítá s § 12 imputovaným min. příjmem <strong>39 173 Kč/měs</strong> (80 % prům. mzdy), i když reálně v daném měsíci nic nezaplatíte. Propad oproti starému systému typicky <strong>−25 tis. Kč/měs a více</strong>.</li>
       </ul>
     </div>
   </div>
@@ -589,10 +589,10 @@
       </tr>
       <tr style="border-bottom:1px dashed var(--c-border)">
         <td style="padding:.45rem .3rem">2 dosp. + 2 děti, <strong>OSVČ hlavní 0 Kč vykázáno</strong> <sup>*</sup></td>
-        <td style="padding:.45rem .3rem">0 Kč</td>
+        <td style="padding:.45rem .3rem">0 Kč (→ 39 173 Kč)</td>
         <td style="padding:.45rem .3rem;text-align:right">36 405 Kč</td>
-        <td style="padding:.45rem .3rem;text-align:right">32 200 Kč</td>
-        <td style="padding:.45rem .3rem;text-align:right;color:#dc2626;font-weight:700">−4 205 Kč</td>
+        <td style="padding:.45rem .3rem;text-align:right">10 300 Kč</td>
+        <td style="padding:.45rem .3rem;text-align:right;color:#dc2626;font-weight:700">−26 105 Kč</td>
       </tr>
       <tr style="border-bottom:1px dashed var(--c-border)">
         <td style="padding:.45rem .3rem">2 dosp. + 2 děti, oba pracují, krajské město</td>
@@ -619,7 +619,7 @@
   </table>
   <div class="note" style="margin-top:.5rem;line-height:1.5">
     Všichni dospělí pracovně aktivní, nezranitelní. Všechny děti &lt; 18 let = zranitelné dle § 7. Děti v řádcích 1–2 rozložené jako 1× u 6 let / 2× 6–15 let / (1× student 15–26) pro 4 dětí; u 3 dětí 0/2/1. Modelový nájem 16–18 tis. Kč + energie 3,5–5 tis. Kč.<br>
-    <sup>*</sup> OSVČ řádek: oba systémy počítáme z vykázaných 0 Kč. Zákon § 12 ve skutečnosti pro novou dávku imputuje min. 39 173 Kč/měs u hlavní OSVČ — reálná nová dávka by byla řádově o 10–15 tis. Kč nižší.
+    <sup>*</sup> OSVČ hlavní s nulovým reálným příjmem: nová dávka se počítá z § 12 imputovaného min. příjmu <strong>39 173 Kč/měs</strong> (80 % prům. mzdy 2026), zatímco stará dávka operuje s reálnými 0 Kč. Stejný formálně-pracující rodič tedy v novém systému dostane 10,3 tis. místo 36,4 tis. — propad 26 tis. Kč/měs z titulu OSVČ zůstává i po měsících bez skutečných tržeb.
   </div>
 </div>
 
