@@ -239,11 +239,12 @@
 <div class="wrap">
 
 <header>
-  <h1>Superdávka (DSSP) 2026<span class="v">v2</span></h1>
+  <h1>Superdávka (DSSP) 2026<span class="v">v3</span></h1>
   <div class="sub">Interaktivní kalkulačka s vysvětlením níže. 21 023 897 ověřených výpočtů robotem v kalkulačce MPSV.</div>
   <div class="badges">
     <span class="badge law">Zákon č. 151/2025 Sb.</span>
     <span class="badge ok" id="badge-accuracy">Shoda s MPSV: 99,98 %</span>
+    <span class="badge" id="badge-updated">Aktualizace 20. 4. 2026</span>
   </div>
 </header>
 
@@ -278,9 +279,9 @@
       <div class="input-group" id="energy-group">
         <label>
           <span>Skutečné měsíční náklady na energie <span class="help" data-tip="Elektřina + plyn + teplo + vodné/stočné. Pokud P ≥ 1,43× ŽM, použije se paušál (§ 32). Pokud P < 1,43× ŽM, uzná se skutečná částka max. do 1,2× paušálu.">?</span></span>
-          <span class="val" id="lbl-energy">0 Kč</span>
+          <span class="val" id="lbl-energy">4 000 Kč</span>
         </label>
-        <input type="range" id="energy" min="0" max="12000" step="100" value="0">
+        <input type="range" id="energy" min="0" max="12000" step="100" value="4000">
         <div class="hint" id="hint-energy" style="display:none"></div>
       </div>
       <div class="input-group" id="owner-info" style="display:none">
@@ -385,7 +386,7 @@
   <details id="advanced" style="margin-top:1rem;border-top:1px dashed var(--c-border);padding-top:.8rem">
     <summary style="cursor:pointer;font-size:1rem;font-weight:700;color:var(--c-text);padding:.25rem 0">
       Pokročilé parametry
-      <span class="note" style="display:inline;font-weight:400">— per-osoba (věk, zranitelnost, výživné), tuhá paliva, substandard, majetek, OSVČ</span>
+      <span class="note" style="display:inline;font-weight:400">— nastavení jednotlivých osob (věk, zranitelnost, výživné), tuhá paliva, podstandardní bydlení, majetek, OSVČ</span>
     </summary>
 
     <div style="margin-top:.8rem;display:flex;flex-direction:column;gap:1rem">
@@ -393,7 +394,7 @@
       <!-- ────────── Dospělí — per-osoba ────────── -->
       <div class="input-group">
         <label>
-          <span>Dospělí — individuální nastavení <span class="help" data-tip="Každý dospělý v domácnosti může mít individuální věk, zranitelnost, zaměstnanost a přijaté výživné. Toto přepisuje agregované 'Zranitelnost domácnosti' z Základních parametrů. MPSV sloučí tato pole přes stejný schema, jakým je přijímá oficiální kalkulačka.">?</span></span>
+          <span>Dospělí — individuální nastavení <span class="help" data-tip="Každý dospělý v domácnosti může mít individuální věk, zranitelnost, zaměstnanost a přijaté výživné. Tato pole přepisují souhrnné nastavení „Zranitelnost domácnosti" ze základních parametrů. MPSV tato pole slučuje stejným způsobem, jakým je přijímá oficiální kalkulačka.">?</span></span>
         </label>
         <div id="adults-rows" style="display:flex;flex-direction:column;gap:.6rem;margin-top:.3rem"></div>
       </div>
@@ -401,7 +402,7 @@
       <!-- ────────── Děti — zranitelnost per dítě ────────── -->
       <div class="input-group" id="children-rows-group" style="display:none">
         <label>
-          <span>Děti — zranitelnost per dítě <span class="help" data-tip="§ 39 — bonus na dítě náleží pouze zranitelnému dítěti. Když nastavíte zranitelnost 'ano' v Základních parametrech (všichni zranitelní), každé dítě má ano; můžete přepsat per dítě. Výchozí stav kopíruje agregát.">?</span></span>
+          <span>Děti — zranitelnost u jednotlivých dětí <span class="help" data-tip="§ 39 — bonus na dítě náleží pouze zranitelnému dítěti. Když v základních parametrech nastavíte zranitelnost „ano" (všichni zranitelní), má ji každé dítě; u každého dítěte ji pak můžete zvlášť přepsat. Výchozí stav kopíruje souhrnné nastavení.">?</span></span>
         </label>
         <div id="children-rows" style="display:flex;flex-direction:column;gap:.45rem;margin-top:.3rem"></div>
       </div>
@@ -431,7 +432,7 @@
       <!-- ────────── Majetkový test — detailní pole ────────── -->
       <div class="input-group">
         <label>
-          <span>Majetkový test (§ 17) <span class="help" data-tip="§ 17 zákona 151/2025 Sb. — hard gate. Dvě a více vozidel, dvě a více vlastních staveb k bydlení, nebo úspory/likvidní aktiva nad zákonný limit → nárok nevzniká (0 Kč).">?</span></span>
+          <span>Majetkový test (§ 17) <span class="help" data-tip="§ 17 zákona 151/2025 Sb. — absolutně blokující podmínka. Dvě a více vozidel, dvě a více vlastních staveb k bydlení, nebo úspory / likvidní aktiva nad zákonný limit → nárok nevzniká (0 Kč).">?</span></span>
         </label>
         <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:.35rem .6rem;align-items:center;margin-top:.35rem;font-size:.88rem">
           <span style="font-weight:500">Počet automobilů <span class="help" data-tip="Osobních vozidel (mimo výjimek pro osobu se zdravotním postižením a pro výkon práce). Nárok zaniká, pokud počet vozidel překročí počet osob s věkem 18+ v domácnosti (tj. max 1 auto na osobu s řidičákem).">?</span></span>
@@ -888,7 +889,7 @@ Fáze vyběhnutí (P &gt; 1,6 × ŽM):
   B<sub>práce</sub> = max(0,  0,40 × 1,6× ŽM − 0,30 × (P − 1,6× ŽM))</div>
   <div class="note">
     Jednotlivec (ŽM = 4 860 Kč): vrchol 3 110 Kč při P = 7 776 Kč. Klesá na 0 při P ≈ 18 144 Kč (3,73× ŽM).
-    Podmínka: domácnost musí pobírat alespoň jednu jinou složku &gt; 0 (§ 40) — v MPSV algoritmu se tato podmínka v praxi neosekává, protož v pásmu nárůstu je S<sub>bydlení</sub> &gt; 0 prakticky vždy.
+    Podmínka: domácnost musí pobírat alespoň jednu jinou složku &gt; 0 (§ 40) — v algoritmu MPSV se tato podmínka v praxi neořezává, protože v pásmu nárůstu je S<sub>bydlení</sub> &gt; 0 prakticky vždy.
   </div>
 </div>
 
@@ -935,7 +936,7 @@ Fáze vyběhnutí (P &gt; 1,6 × ŽM):
   <div class="disclaimer">
     <strong>Ověření:</strong> Kalkulačka byla přeměřena proti <strong>21 023 897 odpovědím</strong> oficiální kalkulačky MPSV — napříč různými velikostmi rodin, typy bydlení, obcemi, výživným i majetkovým testem. Ve <strong>99,98 % případů</strong> vychází stejná částka; zbývající rozdíly se týkají domácností, kde dávka stejně vychází 0 Kč.
     <br><br>
-    <strong>Limity:</strong> Tato kalkulačka nezohledňuje § 37 (zvýšení životních potřeb — individuální plán, veřejná služba, dieta) a pro OSVČ hlavní činnost aplikuje jen podlaží 0,80 × průměrné mzdy. Hranice jednotlivých typů zranitelnosti (68+, invalida II/III, těhotná, samoživitel a další dle § 7) si musíte posoudit sami — kalkulačka přijímá binární příznak „zranitelná ano/ne" per osoba. Pro závazné rozhodnutí podejte žádost přes <a href="https://jenda.mpsv.cz" target="_blank">Jenda</a>.
+    <strong>Limity:</strong> Tato kalkulačka nezohledňuje § 37 (zvýšení životních potřeb — individuální plán, veřejná služba, dieta) a u OSVČ hlavní činnosti uplatňuje pouze spodní mez 0,80 × průměrné mzdy. Hranice jednotlivých typů zranitelnosti (68+, invalida II/III, těhotná, samoživitel a další dle § 7) si musíte posoudit sami — kalkulačka přijímá binární příznak „zranitelná ano/ne" per osoba. Pro závazné rozhodnutí podejte žádost přes <a href="https://jenda.mpsv.cz" target="_blank">Jenda</a>.
   </div>
 </footer>
 
@@ -1949,7 +1950,7 @@ function update() {
       childNote = {
         low:   `${per} × ${nDeti} dětí (nízký příjem${r.vsichniZranit ? ', všichni zranitelní' : ''})`,
         mid:   `${per} × ${nDeti} dětí (střední pásmo 1,43 – 3× ŽM)`,
-        gap:   `P = 3× ŽM — hraniční MPSV quirk (0 Kč)`,
+        gap:   `P = 3× ŽM — zvláštnost algoritmu MPSV (0 Kč)`,
         taper: `${per} × ${nDeti} (klesá, pásmo 3 – 4× ŽM)`,
         over:  `P ≥ 4× ŽM — nenáleží (0 Kč)`,
         none:  '—'
@@ -2101,7 +2102,7 @@ function update() {
   }
   lines.push(`Období: ${obdobiCZ}, status: ${statusCZ}`);
   if (!r.assetsPass) {
-    lines.push(`MAJETKOVÝ TEST (§ 17) NEPROŠEL — dávka = 0 Kč (hard gate).`);
+    lines.push(`MAJETKOVÝ TEST (§ 17) NEPROŠEL — dávka = 0 Kč (absolutně blokující podmínka).`);
   }
   lines.push('');
 
@@ -2238,8 +2239,8 @@ function update() {
     const hruby = Math.round(0.40 * r.RP);
     const penaleP = Math.round(0.40 * pasivni);
     lines.push(`P = ${n(r.RP)} (z toho pasivní ${n(pasivni)}) je v rozmezí plného bonusu (do 1,6 × ŽM = ${n(prah16)}).`);
-    lines.push(`První leg: 0,40 × P = 0,40 × ${n(r.RP)} = ${k(hruby)}`);
-    if (pasivni > 0) lines.push(`Penále za pasivní příjem: 0,40 × ${n(pasivni)} = ${k(penaleP)}`);
+    lines.push(`První část: 0,40 × P = 0,40 × ${n(r.RP)} = ${k(hruby)}`);
+    if (pasivni > 0) lines.push(`Srážka za pasivní příjem: 0,40 × ${n(pasivni)} = ${k(penaleP)}`);
     lines.push(`Pracovní bonus = ${k(r.workBonus)}`);
   } else {
     const vrchol = Math.round(0.40 * prah16);
@@ -2249,8 +2250,8 @@ function update() {
     lines.push(`P = ${n(r.RP)} je nad 1,6 × ŽM = ${n(prah16)} — bonus se redukuje.`);
     lines.push(`Vrchol bonusu: 0,40 × ${n(prah16)} = ${k(vrchol)}`);
     lines.push(`Přesah nad práh: ${n(r.RP)} − ${n(prah16)} = ${k(presah)}  →  redukce 0,30 × = ${k(redukc)}`);
-    if (pasivni > 0) lines.push(`Penále za pasivní příjem: 0,40 × ${n(pasivni)} = ${k(penaleP)}`);
-    lines.push(`Pracovní bonus = max(0, vrchol − redukce − penále) = ${k(r.workBonus)}`);
+    if (pasivni > 0) lines.push(`Srážka za pasivní příjem: 0,40 × ${n(pasivni)} = ${k(penaleP)}`);
+    lines.push(`Pracovní bonus = max(0, vrchol − redukce − srážka) = ${k(r.workBonus)}`);
   }
   lines.push('');
 
